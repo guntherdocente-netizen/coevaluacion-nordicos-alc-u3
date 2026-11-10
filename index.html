@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>U3 · Países nórdicos vs. América Latina y el Caribe — Autoevaluación y coevaluación</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.8.4/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  body { background: linear-gradient(135deg,#0f172a 0%,#1e3a5f 55%,#0f766e 100%); min-height:100vh; font-family: system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  .glass-panel { background: rgba(255,255,255,.96); border-radius: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+  .tab-btn.active { background:#fff; color:#0f172a; }
+  .toast { position:fixed; right:1rem; bottom:1rem; z-index:100; max-width:26rem; padding:.75rem 1rem; border-radius:.6rem; color:#fff; box-shadow:0 6px 20px rgba(0,0,0,.3); transition:opacity .3s; }
+  .toast.ok { background:#15803d; } .toast.err { background:#b91c1c; } .toast.info { background:#1d4ed8; } .toast.warn { background:#b45309; }
+  .missing-score { outline:3px solid #dc2626; outline-offset:3px; border-radius:.5rem; }
+  .lvl-btn { width:2.4rem; height:2.4rem; border-radius:.5rem; font-weight:700; border:2px solid transparent; transition:transform .1s; }
+  .lvl-btn:hover { transform:scale(1.08); }
+  .lvl-exc { background:#dcfce7; color:#166534; } .lvl-exc.lvl-sel { background:#16a34a; color:#fff; border-color:#14532d; }
+  .lvl-log { background:#dbeafe; color:#1e40af; } .lvl-log.lvl-sel { background:#2563eb; color:#fff; border-color:#1e3a8a; }
+  .lvl-proc { background:#fef3c7; color:#92400e; } .lvl-proc.lvl-sel { background:#d97706; color:#fff; border-color:#78350f; }
+  .lvl-ini { background:#fee2e2; color:#991b1b; } .lvl-ini.lvl-sel { background:#dc2626; color:#fff; border-color:#7f1d1d; }
+  .desc-exc { background:#f0fdf4; border-left:4px solid #16a34a; } .desc-log { background:#eff6ff; border-left:4px solid #2563eb; }
+  .desc-proc { background:#fffbeb; border-left:4px solid #d97706; } .desc-ini { background:#fef2f2; border-left:4px solid #dc2626; }
+  .score-ok { background:#dcfce7; color:#166534; font-weight:600; } .score-miss { background:#fee2e2; color:#991b1b; } .score-self { background:#e0e7ff; color:#3730a3; font-weight:600; }
+  table.data { border-collapse:collapse; width:100%; font-size:.82rem; }
+  table.data th, table.data td { border:1px solid #cbd5e1; padding:.3rem .45rem; text-align:left; vertical-align:top; }
+  table.data th { background:#f1f5f9; position:sticky; top:0; }
+  .informe-overlay { position:fixed; inset:0; background:rgba(15,23,42,.75); z-index:90; overflow:auto; padding:1.5rem; display:none; }
+  .informe-overlay.open { display:block; }
+  .informe-print { background:#fff; max-width:52rem; margin:0 auto; border-radius:.75rem; padding:2rem; }
+  .btn { padding:.5rem .9rem; border-radius:.5rem; font-weight:600; font-size:.9rem; }
+  .btn-primary { background:#0f766e; color:#fff; } .btn-primary:hover { background:#115e59; }
+  .btn-sec { background:#e2e8f0; color:#0f172a; } .btn-sec:hover { background:#cbd5e1; }
+  .btn-danger { background:#dc2626; color:#fff; } .btn-danger:hover { background:#b91c1c; }
+  .btn-sm { padding:.25rem .55rem; font-size:.78rem; }
+  .field { border:1px solid #94a3b8; border-radius:.45rem; padding:.4rem .6rem; background:#fff; }
+  @media print {
+    body { background:#fff !important; }
+    body * { visibility:hidden; }
+    #informe-print, #informe-print * { visibility:visible; }
+    #informe-print { position:absolute; left:0; top:0; width:100%; max-width:none; padding:0; box-shadow:none; }
+    .no-print { display:none !important; }
+  }
+</style>
+</head>
+<body class="text-slate-800">
+<div class="max-w-6xl mx-auto px-3 py-5">
+  <header class="text-white mb-4">
+    <p class="text-sm uppercase tracking-wider text-teal-200">Logos Academy · Historia / Individuos y Sociedades · 3.° BGU</p>
+    <h1 class="text-2xl md:text-3xl font-bold">Proyecto colaborativo de cierre, Unidad 3</h1>
+    <p class="text-lg text-slate-200">Países nórdicos vs. América Latina y el Caribe — Autoevaluación y coevaluación por equipos</p>
+    <p id="db-status" class="text-xs mt-1 text-slate-300">Conectando con la base de datos…</p>
+  </header>
+
+  <nav class="flex flex-wrap gap-2 mb-4 no-print">
+    <button class="tab-btn active btn bg-white/20 text-white" data-tab="tab-intro" onclick="showTab('tab-intro')">1. Introducción</button>
+    <button class="tab-btn btn bg-white/20 text-white" data-tab="tab-eval" onclick="showTab('tab-eval')">2. Evaluación</button>
+    <button class="tab-btn btn bg-white/20 text-white" data-tab="tab-informe" onclick="showTab('tab-informe')">3. Mi informe</button>
+  </nav>
+
+  <!-- ===================== PESTAÑA 1: INTRODUCCIÓN ===================== -->
+  <section id="tab-intro" class="tab-content active glass-panel p-5 md:p-7">
+    <h2 class="text-xl font-bold mb-2">Contexto del proyecto</h2>
+    <p class="mb-3">Cada equipo comparó un país nórdico con un país de América Latina y el Caribe. Ahora cada equipo evaluará su propio trabajo (autoevaluación) y el trabajo de los demás equipos de su paralelo (coevaluación) con la misma rúbrica oficial que utiliza el docente.</p>
+
+    <div class="p-3 rounded-lg bg-amber-50 border border-amber-300 mb-4 text-sm">
+      <strong>La nota oficial IB PAI la otorga solo el docente. La autoevaluación y la coevaluación forman parte de la nota institucional de la actividad.</strong>
+    </div>
+
+    <h3 class="font-bold mt-4 mb-1">Instrucciones</h3>
+    <ol class="list-decimal ml-6 space-y-1 text-sm">
+      <li>Ingrese a la pestaña <strong>Evaluación</strong>, elija su paralelo y luego su nombre. La aplicación mostrará su equipo y los países asignados.</li>
+      <li>Elija <strong>Autoevaluación (mi equipo)</strong> o <strong>Coevaluación</strong> de otro equipo de su paralelo.</li>
+      <li>Califique cada criterio de 0 a 10 leyendo el descriptor que aparece al elegir cada valor. Pónganse de acuerdo como equipo: la evaluación es del equipo, no individual.</li>
+      <li>Guarde. Si otro integrante de su equipo guarda la misma evaluación, se reemplaza la anterior.</li>
+      <li>Cuando el docente lo indique, consulte su resultado en <strong>Mi informe</strong> con su código personal. <strong>El informe se puede ver una sola vez</strong>; descárguelo o imprímalo en ese momento.</li>
+    </ol>
+
+    <h3 class="font-bold mt-5 mb-1">Cálculo de la nota</h3>
+    <ul class="list-disc ml-6 text-sm space-y-1">
+      <li>Nota de cada hoja = (A × 3 + B × 2 + C × 2 + D × 3) ÷ 10, en escala de 0 a 10.</li>
+      <li>Nota de la actividad = <span id="intro-pesos">70 % docente + 15 % autoevaluación + 15 % coevaluación (promedio de los equipos que los evaluaron)</span>.</li>
+    </ul>
+
+    <h3 class="font-bold mt-5 mb-2">Rúbrica: Criterios de evaluación IB MYP — ADA sincrónica: Proyecto colaborativo de cierre, Unidad 3</h3>
+    <div class="overflow-x-auto"><table class="data" id="intro-rubrica"></table></div>
+
+    <div class="mt-6 text-right">
+      <a href="#" class="text-xs text-slate-400 hover:text-slate-700 underline" onclick="showTab('tab-docente');return false;">Acceso Docente / Configuración</a>
+    </div>
+  </section>
+
+  <!-- ===================== PESTAÑA 2: EVALUACIÓN ===================== -->
+  <section id="tab-eval" class="tab-content glass-panel p-5 md:p-7">
+    <h2 class="text-xl font-bold mb-3">Evaluación por equipos</h2>
+    <div class="grid md:grid-cols-2 gap-3 mb-3">
+      <label class="text-sm font-semibold">Paralelo
+        <select id="ev-paralelo" class="field w-full mt-1" onchange="evOnParalelo()"></select>
+      </label>
+      <label class="text-sm font-semibold">Su nombre
+        <select id="ev-nombre" class="field w-full mt-1" onchange="evOnNombre()"><option value="">Primero elija su paralelo</option></select>
+      </label>
+    </div>
+    <div id="ev-equipo-info" class="hidden p-3 rounded-lg bg-teal-50 border border-teal-200 mb-3 text-sm"></div>
+    <div id="ev-cerrado" class="hidden p-4 rounded-lg bg-red-50 border border-red-300 text-red-800 font-semibold">El tiempo para registrar evaluaciones ha finalizado.</div>
+    <div id="ev-form" class="hidden">
+      <div class="flex flex-wrap gap-4 items-center mb-3 text-sm">
+        <span class="font-semibold">Tipo de evaluación:</span>
+        <label class="flex items-center gap-1"><input type="radio" name="ev-tipo" value="auto" checked onchange="evOnTipo()"> Autoevaluación (mi equipo)</label>
+        <label class="flex items-center gap-1"><input type="radio" name="ev-tipo" value="coev" onchange="evOnTipo()"> Coevaluación</label>
+      </div>
+      <div id="ev-coev-wrap" class="hidden mb-3">
+        <label class="text-sm font-semibold">Equipo que evaluarán
+          <select id="ev-evaluado" class="field w-full mt-1" onchange="renderEvalCard()"></select>
+        </label>
+      </div>
+      <p class="text-xs text-slate-600 mb-3">La nota oficial IB PAI la otorga solo el docente. La autoevaluación y la coevaluación forman parte de la nota institucional de la actividad.</p>
+      <div id="ev-card"></div>
+    </div>
+  </section>
+
+  <!-- ===================== PESTAÑA 3: MI INFORME ===================== -->
+  <section id="tab-informe" class="tab-content glass-panel p-5 md:p-7">
+    <h2 class="text-xl font-bold mb-2">Mi informe</h2>
+    <p class="text-sm mb-3 p-3 rounded bg-amber-50 border border-amber-300"><strong>El informe se puede ver una sola vez.</strong> Al abrirlo, descárguelo en PDF, HTML o TXT, o imprímalo antes de cerrarlo.</p>
+    <div class="grid md:grid-cols-3 gap-3">
+      <label class="text-sm font-semibold">Paralelo
+        <select id="inf-paralelo" class="field w-full mt-1" onchange="infOnParalelo()"></select>
+      </label>
+      <label class="text-sm font-semibold">Su nombre
+        <select id="inf-nombre" class="field w-full mt-1"><option value="">Primero elija su paralelo</option></select>
+      </label>
+      <label class="text-sm font-semibold">Código personal (6 caracteres)
+        <input id="inf-codigo" maxlength="6" class="field w-full mt-1 uppercase tracking-widest" autocomplete="off">
+      </label>
+    </div>
+    <button class="btn btn-primary mt-4" id="btn-ver-informe" onclick="verMiInforme()">Ver mi informe</button>
+  </section>
+
+  <!-- ===================== PANEL DOCENTE ===================== -->
+  <section id="tab-docente" class="tab-content glass-panel p-5 md:p-7">
+    <div id="doc-login">
+      <h2 class="text-xl font-bold mb-3">Acceso docente</h2>
+      <div class="flex gap-2 max-w-md">
+        <input type="password" id="doc-pass" class="field flex-1" placeholder="Contraseña" onkeydown="if(event.key==='Enter')docLogin()">
+        <button class="btn btn-primary" onclick="docLogin()">Entrar</button>
+      </div>
+      <p class="text-xs text-slate-500 mt-2">Aviso: esta contraseña es una barrera de uso, no un mecanismo de seguridad.</p>
+    </div>
+    <div id="doc-panel" class="hidden space-y-6">
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <h2 class="text-xl font-bold">Panel docente</h2>
+        <button class="btn btn-sec btn-sm" onclick="docLogout()">Salir del panel</button>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">1. Control de evaluaciones por paralelo</h3><div id="doc-locks" class="flex flex-wrap gap-3"></div></div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">2. Pesos de la nota final</h3>
+        <div class="flex flex-wrap gap-3 items-end text-sm">
+          <label>Docente (%)<input type="number" id="peso-doc" class="field w-24 block" min="0" max="100" oninput="previewPesos()"></label>
+          <label>Autoevaluación (%)<input type="number" id="peso-auto" class="field w-24 block" min="0" max="100" oninput="previewPesos()"></label>
+          <label>Coevaluación (%)<input type="number" id="peso-coev" class="field w-24 block" min="0" max="100" oninput="previewPesos()"></label>
+          <button class="btn btn-primary btn-sm" id="btn-pesos" onclick="guardarPesos(this)">Guardar pesos</button>
+        </div>
+        <p id="pesos-preview" class="text-xs mt-2"></p>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">3. Gestión de equipos por paralelo</h3>
+        <p class="text-xs text-slate-600 mb-2">Formato de importación, una línea por equipo: <code>3A | 1 | País nórdico | País latinoamericano | Integrante 1, Integrante 2, Integrante 3</code>. Los cambios son locales hasta pulsar «Guardar equipos en la nube». Cambiar el número de un equipo cambia su identificador y desvincula sus evaluaciones previas.</p>
+        <textarea id="team-import" class="field w-full h-28 text-xs font-mono" placeholder="3A | 1 | Reino de Noruega | República Bolivariana de Venezuela | Nombre Apellido, Nombre Apellido"></textarea>
+        <div class="flex flex-wrap gap-2 my-2">
+          <button class="btn btn-sec btn-sm" onclick="importarEquipos()">Importar texto al editor</button>
+          <button class="btn btn-sec btn-sm" onclick="exportarEquiposTexto()">Copiar equipos actuales al cuadro de texto</button>
+          <button class="btn btn-sec btn-sm" onclick="recargarEditorEquipos()">Descartar cambios locales</button>
+          <button class="btn btn-primary btn-sm" onclick="armButton(this, guardarEquipos)">Guardar equipos en la nube</button>
+        </div>
+        <div id="team-validation" class="text-xs mb-2"></div>
+        <div id="team-editor"></div>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">4. Heteroevaluación docente</h3>
+        <div class="grid md:grid-cols-2 gap-3 mb-3 text-sm">
+          <label>Paralelo<select id="doc-paralelo" class="field w-full" onchange="docOnParalelo()"></select></label>
+          <label>Equipo<select id="doc-equipo" class="field w-full" onchange="renderDocCard()"></select></label>
+        </div>
+        <div id="doc-card"></div>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">5. Seguimiento</h3>
+        <p class="text-xs text-slate-600 mb-2">Filas: equipo evaluador. Columnas: equipo evaluado. La diagonal es la autoevaluación.</p>
+        <div id="doc-seguimiento" class="space-y-4"></div>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">6. Códigos de acceso al informe</h3>
+        <p class="text-sm mb-2 p-2 rounded bg-amber-50 border border-amber-300">El informe se puede ver una sola vez.</p>
+        <div class="flex flex-wrap gap-2 mb-2 items-center text-sm">
+          <select id="cod-filtro" class="field" onchange="renderCodigos()"></select>
+          <button class="btn btn-sec btn-sm" onclick="ensureCodigos(true)">Generar códigos faltantes</button>
+          <button class="btn btn-sec btn-sm" onclick="copiarListaCodigos()">Copiar lista</button>
+          <button class="btn btn-danger btn-sm" onclick="armButton(this, resetAllViews)">Restablecer todas las vistas del filtro</button>
+        </div>
+        <div class="max-h-96 overflow-auto"><table class="data" id="cod-tabla"></table></div>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">Estadísticas por paralelo</h3><div id="doc-stats" class="overflow-x-auto"></div></div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">Notas en vivo por estudiante</h3>
+        <div class="flex flex-wrap gap-2 mb-2 items-center text-sm">
+          <label>Filtro de paralelo <select id="exp-filtro" class="field" onchange="renderNotas()"></select></label>
+          <button class="btn btn-primary btn-sm" onclick="exportCSV()">Descargar CSV</button>
+          <button class="btn btn-primary btn-sm" onclick="exportXLSX()">Descargar XLSX</button>
+        </div>
+        <div class="max-h-[32rem] overflow-auto"><table class="data" id="notas-tabla"></table></div>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">Registros de autoevaluación y coevaluación</h3>
+        <div class="max-h-96 overflow-auto"><table class="data" id="logs-tabla"></table></div>
+        <div class="mt-3"><button class="btn btn-danger btn-sm" onclick="armButton(this, clearCloudData)">Borrar todas las autoevaluaciones y coevaluaciones de esta actividad</button></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ===================== OVERLAY DEL INFORME ===================== -->
+<div id="informe-overlay" class="informe-overlay">
+  <div class="max-w-[52rem] mx-auto flex flex-wrap gap-2 justify-end mb-3 no-print">
+    <button class="btn btn-sec btn-sm" onclick="window.print()">Imprimir</button>
+    <button class="btn btn-sec btn-sm" onclick="descargarInforme('pdf')">Descargar PDF</button>
+    <button class="btn btn-sec btn-sm" onclick="descargarInforme('html')">Descargar HTML</button>
+    <button class="btn btn-sec btn-sm" onclick="descargarInforme('txt')">Descargar TXT</button>
+    <button class="btn btn-danger btn-sm" onclick="cerrarInforme()">Cerrar</button>
+  </div>
+  <div id="informe-print" class="informe-print"></div>
+</div>
+<div id="toast" class="toast hidden"></div>
+
+<script>
+'use strict';
+/* ===================== CONFIGURACIÓN Y DATOS ===================== */
+const firebaseConfig = {
+  apiKey: "AIzaSyBVun-KxPNNA7T7wuJH053rXf5zKzsQgnc",
+  authDomain: "historia-unidad32026.firebaseapp.com",
+  databaseURL: "https://historia-unidad32026-default-rtdb.firebaseio.com",
+  projectId: "historia-unidad32026",
+  storageBucket: "historia-unidad32026.firebasestorage.app",
+  messagingSenderId: "751038639836",
+  appId: "1:751038639836:web:822ffc34bfa9dbc9d5ce19"
+};
+const ACT = 'nordicos_alc_u3';
+const DB_NODE      = 'evaluaciones_' + ACT;
+const DOCENTE_NODE = 'docente_' + ACT;
+const CONFIG_NODE  = 'config_pesos_' + ACT;
+const CODES_NODE   = 'codigos_' + ACT;
+const VIEWS_NODE   = 'vistas_' + ACT;
+const LOCK_NODE    = 'config_' + ACT + '/evaluationsActive';
+const TEAMS_NODE   = 'teams_' + ACT;
+const DOCENTE_PASS = 'Nordicos-U3-2026';
+const PARALELOS = ['3A', '3B', '3C'];
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+/* Rúbrica oficial: descriptores copiados literalmente del documento del docente. */
+const CRITERIA = [
+  { id:'A', nombre:'Conocimiento', peso:3, evidencia:'Perfil y características', bandas:{
+    exc:'Terminología amplia y precisa; origen histórico y modelo exactos de ambos países, ejemplos exhaustivos.',
+    log:'Terminología variada y correcta; explicación adecuada con ejemplos precisos.',
+    proc:'Terminología limitada; explicación básica, ejemplos mínimos.',
+    ini:'Conocimiento escaso o ausente de ambos países.' },
+    consejo:'usar terminología precisa y explicar el origen histórico y el modelo de ambos países con ejemplos concretos' },
+  { id:'B', nombre:'Investigación', peso:2, evidencia:'Fuentes, todas las secciones', bandas:{
+    exc:'Fuentes exhaustivas (fichas país, PNUD, Banco Mundial, CEPAL); evalúa minuciosamente su confiabilidad.',
+    log:'Fuentes pertinentes y confiables; evaluación clara del proceso.',
+    proc:'Información limitada o poco pertinente; evaluación parcial.',
+    ini:'Investigación mínima o ausente.' },
+    consejo:'ampliar las fuentes con fichas país, PNUD, Banco Mundial y CEPAL, y evaluar su confiabilidad' },
+  { id:'C', nombre:'Comunicación', peso:2, evidencia:'Portada y comparación visual', bandas:{
+    exc:'Collage que aprovecha con presentación cuidada todo el espacio físico; apoyo visual pertinente; APA 7.ª correcta.',
+    log:'Aprovechamiento del espacio y apoyo visual generalmente apropiados; documenta fuentes.',
+    proc:'Comunicación limitada; aprovechamiento apenas apropiado.',
+    ini:'Comunicación muy limitada o ausente; sin organización visual.' },
+    consejo:'aprovechar todo el espacio del collage con apoyo visual pertinente y citar en APA 7.ª edición' },
+  { id:'D', nombre:'Pensamiento crítico', peso:3, evidencia:'Conclusiones', bandas:{
+    exc:'Síntesis propia y precisa de qué explica mejor las diferencias de bienestar, con datos núcleo y de contexto.',
+    log:'Síntesis correcta, con argumento propio y datos concretos.',
+    proc:'Síntesis general o confusa, sin argumento propio claro.',
+    ini:'No hay síntesis propia, o es incorrecta/ausente.' },
+    consejo:'formular una síntesis propia sobre qué explica mejor las diferencias de bienestar, sustentada en datos núcleo y de contexto' }
+];
+const BAND_LABEL = { exc:'9–10 Excelente', log:'6–8 Logrado', proc:'3–5 En proceso', ini:'0–2 Inicial' };
+
+/* ===================== UTILIDADES ===================== */
+function band(v) { return v >= 9 ? 'exc' : v >= 6 ? 'log' : v >= 3 ? 'proc' : 'ini'; }
+function notaHoja(s) { return (s.A * 3 + s.B * 2 + s.C * 2 + s.D * 3) / 10; }
+function completo(s) { return CRITERIA.every(c => Number.isInteger(s[c.id])); }
+function r1(x) { return (x == null || isNaN(x)) ? null : Math.round(x * 10 + 1e-9) / 10; }
+function fmt(x) { const v = r1(x); return v == null ? '—' : v.toFixed(1).replace('.', ','); }
+function avg(arr) { const a = arr.filter(v => typeof v === 'number' && !isNaN(v)); return a.length ? a.reduce((s, v) => s + v, 0) / a.length : null; }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch])); }
+function safeKey(s) { return String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_-]/g, '_'); }
+function studentKey(paralelo, nombre) { return paralelo + '__' + safeKey(nombre); }
+function shortName(n) { const p = String(n).trim().split(/\s+/); return p.length > 1 ? p[0] + ' ' + p[p.length - 1] : p[0]; }
+function teamNum(id) { const m = /-E(\d+)$/.exec(id || ''); return m ? parseInt(m[1], 10) : null; }
+function groupLabel(id) { const t = findTeam(id); return t ? t.paralelo + ' · Equipo ' + t.num : (id ? id.split('-E')[0] + ' · Equipo ' + teamNum(id) : ''); }
+function teamDesc(t) { return 'Equipo ' + t.num + ' — ' + t.nordico + ' vs. ' + t.latam; }
+function fechaTxt(ts) { if (!ts) return ''; const d = new Date(ts); return d.toLocaleString('es-EC', { dateStyle:'short', timeStyle:'short' }); }
+function smap(arr, fn) { return arr.map(fn).join(''); }
+
+let toastTimer = null;
+function showToast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast ' + (type || 'info');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.add('hidden'), 4500);
+}
+
+/* Acciones destructivas: primer clic arma, segundo clic (en 6 s) ejecuta, sin cuadros de diálogo del navegador. */
+function armButton(btn, fn) {
+  if (btn.dataset.armed === '1') {
+    clearTimeout(btn._armT); btn.dataset.armed = ''; btn.textContent = btn.dataset.label; fn(btn); return;
+  }
+  btn.dataset.label = btn.textContent; btn.dataset.armed = '1'; btn.textContent = '¿Confirmar?';
+  btn._armT = setTimeout(() => { btn.dataset.armed = ''; btn.textContent = btn.dataset.label; }, 6000);
+}
+
+function copyText(txt) {
+  const fallback = () => {
+    const ta = document.createElement('textarea'); ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove(); showToast(ok ? 'Copiado al portapapeles.' : 'No se pudo copiar automáticamente.', ok ? 'ok' : 'err');
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(() => showToast('Copiado al portapapeles.', 'ok'), fallback);
+  else fallback();
+}
+function genCode() {
+  const a = new Uint32Array(6); crypto.getRandomValues(a);
+  return Array.from(a, n => CODE_ALPHABET[n % CODE_ALPHABET.length]).join('');
+}
+
+/* ===================== ESTADO Y FIREBASE ===================== */
+let db = null;
+let teams = { '3A': [], '3B': [], '3C': [] };
+let ROSTER = [];
+let allLogs = [];
+let docenteScores = {};
+let pesos = { docente:70, auto:15, coev:15 };
+let locks = {};
+let codigos = {};
+let vistas = {};
+let consultaUnlockedStudent = null;
+let informeActual = null;
+let docenteActivo = false;
+const loaded = { teams:false, logs:false, docente:false, pesos:false, locks:false };
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch (e) { db = null; console.error('Firebase no disponible', e); }
+
+function normTeams(v) {
+  const out = { '3A': [], '3B': [], '3C': [] };
+  if (!v) return out;
+  PARALELOS.forEach(p => {
+    const arr = v[p] ? Object.values(v[p]) : [];
+    out[p] = arr.filter(Boolean).map(t => ({
+      id: p + '-E' + t.num, num: Number(t.num), paralelo: p,
+      nordico: t.nordico || '', latam: t.latam || '',
+      integrantes: t.integrantes ? Object.values(t.integrantes).filter(Boolean) : []
+    })).sort((a, b) => a.num - b.num);
+  });
+  return out;
+}
+function rebuildRoster() {
+  ROSTER = [];
+  PARALELOS.forEach(p => teams[p].forEach(t => t.integrantes.forEach((n, i) =>
+    ROSTER.push({ nombre: n, paralelo: p, teamId: t.id, orden: i, key: studentKey(p, n) }))));
+}
+function findTeam(id) { for (const p of PARALELOS) { const t = teams[p].find(x => x.id === id); if (t) return t; } return null; }
+function findGroupOf(paralelo, nombre) { const s = ROSTER.find(r => r.paralelo === paralelo && r.nombre === nombre); return s ? findTeam(s.teamId) : null; }
+function isOpen(p) { return locks[p] !== false; }
+
+function setStatus(txt) { const el = document.getElementById('db-status'); if (el) el.textContent = txt; }
+
+function attachListeners() {
+  if (!db) { setStatus('No se pudo cargar la base de datos. Revise su conexión y recargue la página.'); return; }
+  db.ref('.info/connected').on('value', s => setStatus(s.val() ? 'Conectado a la base de datos.' : 'Sin conexión con la base de datos; reintentando…'));
+  db.ref(TEAMS_NODE).on('value', s => { teams = normTeams(s.val()); rebuildRoster(); loaded.teams = true; onTeamsChange(); },
+    e => showToast('Error al leer equipos: ' + e.message, 'err'));
+  db.ref(DB_NODE).on('value', s => {
+    const v = s.val() || {};
+    allLogs = Object.keys(v).map(k => Object.assign({ logId: k }, v[k]));
+    loaded.logs = true; onDataChange();
+  }, e => showToast('Error al leer evaluaciones: ' + e.message, 'err'));
+  db.ref(DOCENTE_NODE).on('value', s => { docenteScores = s.val() || {}; loaded.docente = true; onDataChange(); });
+  db.ref(CONFIG_NODE).on('value', s => {
+    const v = s.val();
+    pesos = v && typeof v.docente === 'number' ? { docente:v.docente, auto:v.auto, coev:v.coev } : { docente:70, auto:15, coev:15 };
+    loaded.pesos = true; renderIntroPesos(); fillPesosInputs(); onDataChange();
+  });
+  db.ref(LOCK_NODE).on('value', s => { locks = s.val() || {}; loaded.locks = true; evApplyLock(); renderLocks(); });
+}
+
+/* ===================== CÁLCULO ===================== */
+function resultadoEquipo(teamId) {
+  const team = findTeam(teamId);
+  const doc = docenteScores[teamId] || null;
+  const auto = allLogs.find(l => l.tipo === 'auto' && l.equipoEvaluador === teamId && l.equipoEvaluado === teamId) || null;
+  const coevs = allLogs.filter(l => l.tipo === 'coev' && l.equipoEvaluado === teamId && l.equipoEvaluador !== teamId && team && l.paralelo === team.paralelo);
+  const coevAvg = coevs.length ? { A:avg(coevs.map(l => l.A)), B:avg(coevs.map(l => l.B)), C:avg(coevs.map(l => l.C)), D:avg(coevs.map(l => l.D)), nota:avg(coevs.map(l => l.notaHoja)) } : null;
+  const pd = pesos.docente / 100, pa = pesos.auto / 100, pc = pesos.coev / 100;
+  const nd = doc ? doc.notaHoja : null, na = auto ? auto.notaHoja : null, nc = coevAvg ? coevAvg.nota : null;
+  const ap = { d: nd != null ? nd * pd : null, a: na != null ? na * pa : null, c: nc != null ? nc * pc : null };
+  let final = null, estado;
+  if (nd == null) estado = 'Sin nota del docente';
+  else if ((pa > 0 && na == null) || (pc > 0 && nc == null)) estado = 'Pendiente';
+  else { final = ap.d + (ap.a || 0) + (ap.c || 0); estado = 'Completa'; }
+  return { team, doc, auto, coevs, coevAvg, nd, na, nc, ap, final, estado };
+}
+
+function buildFeedback(res) {
+  if (!res.doc) return 'Aún no hay nota del docente para este equipo.';
+  const nd = res.nd, doc = res.doc;
+  const bajos = CRITERIA.filter(c => doc[c.id] < 7).sort((a, b) => doc[a.id] - doc[b.id] || CRITERIA.indexOf(a) - CRITERIA.indexOf(b));
+  const frase = c => {
+    const v = doc[c.id];
+    if (v <= 2) return 'En ' + c.nombre + ', el equipo necesita con urgencia ' + c.consejo + '.';
+    if (v <= 5) return 'En ' + c.nombre + ', le sugerimos ' + c.consejo + '.';
+    return 'En ' + c.nombre + ', le vendría bien ' + c.consejo + '.';
+  };
+  let t;
+  if (r1(nd) >= 7) {
+    t = 'Felicitaciones: su trabajo alcanzó ' + fmt(nd) + ' sobre diez.';
+    t += bajos.length ? ' Para seguir mejorando: ' + bajos.map(frase).join(' ') : ' Mantenga el rigor demostrado en todos los criterios.';
+  } else {
+    t = 'Su nota fue ' + fmt(nd) + ' sobre diez, por debajo de siete.';
+    if (bajos.length) t += ' ' + bajos.map(frase).join(' ');
+  }
+  if (res.na != null && res.na - nd >= 2) t += ' La autoevaluación del equipo superó en dos puntos o más a la nota del docente; les invitamos a contrastar su percepción con los descriptores de la rúbrica.';
+  return t;
+}
+
+/* ===================== INTERFAZ GENERAL ===================== */
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === id));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+}
+function renderIntroRubrica() {
+  const t = document.getElementById('intro-rubrica');
+  t.innerHTML = '<tr><th>Criterio</th><th>9–10 Excelente</th><th>6–8 Logrado</th><th>3–5 En proceso</th><th>0–2 Inicial</th></tr>' +
+    smap(CRITERIA, c => '<tr><td><strong>' + c.id + '. ' + esc(c.nombre) + '</strong> (peso ' + c.peso + ')<br><span class="text-slate-500">' + esc(c.evidencia) + '</span></td>' +
+      ['exc', 'log', 'proc', 'ini'].map(b => '<td class="desc-' + b + '">' + esc(c.bandas[b]) + '</td>').join('') + '</tr>');
+}
+function renderIntroPesos() {
+  const el = document.getElementById('intro-pesos');
+  if (el) el.textContent = pesos.docente + ' % docente + ' + pesos.auto + ' % autoevaluación + ' + pesos.coev + ' % coevaluación (promedio de los equipos que los evaluaron)';
+}
+function fillParaleloSelect(sel, placeholder, withAll) {
+  const cur = sel.value;
+  sel.innerHTML = (withAll ? '<option value="">Todos los paralelos</option>' : '<option value="">' + placeholder + '</option>') +
+    smap(PARALELOS, p => '<option value="' + p + '">' + p + '</option>');
+  sel.value = cur;
+}
+function fillNombreSelect(sel, paralelo) {
+  const cur = sel.value;
+  const lista = ROSTER.filter(r => r.paralelo === paralelo);
+  sel.innerHTML = paralelo ? '<option value="">Elija su nombre</option>' + smap(lista, r => '<option value="' + esc(r.nombre) + '">' + esc(r.nombre) + '</option>')
+    : '<option value="">Primero elija su paralelo</option>';
+  if (lista.some(r => r.nombre === cur)) sel.value = cur;
+}
+
+/* ===================== WIDGET DE RÚBRICA ===================== */
+function renderRubric(container, prefix, scores, onChange) {
+  container.innerHTML = smap(CRITERIA, c =>
+    '<div class="mb-4 p-2" id="' + prefix + '-crit-' + c.id + '">' +
+      '<div class="font-semibold text-sm mb-1">' + c.id + '. ' + esc(c.nombre) + ' <span class="font-normal text-slate-500">(peso ' + c.peso + ' · Evidencia: ' + esc(c.evidencia) + ')</span></div>' +
+      '<div class="flex flex-wrap gap-1">' +
+        Array.from({ length: 11 }, (_, v) => '<button type="button" class="lvl-btn lvl-' + band(v) + '" data-crit="' + c.id + '" data-v="' + v + '">' + v + '</button>').join('') +
+      '</div>' +
+      '<div class="text-xs mt-2 p-2 rounded hidden" id="' + prefix + '-desc-' + c.id + '"></div>' +
+    '</div>');
+  container.querySelectorAll('.lvl-btn').forEach(btn => btn.addEventListener('click', () => {
+    const cid = btn.dataset.crit, v = parseInt(btn.dataset.v, 10);
+    scores[cid] = v;
+    paintCrit(prefix, cid, v);
+    document.getElementById(prefix + '-crit-' + cid).classList.remove('missing-score');
+    if (onChange) onChange();
+  }));
+  CRITERIA.forEach(c => { if (Number.isInteger(scores[c.id])) paintCrit(prefix, c.id, scores[c.id]); });
+}
+function paintCrit(prefix, cid, v) {
+  const box = document.getElementById(prefix + '-crit-' + cid);
+  box.querySelectorAll('.lvl-btn').forEach(b => b.classList.toggle('lvl-sel', parseInt(b.dataset.v, 10) === v));
+  const c = CRITERIA.find(x => x.id === cid), b = band(v);
+  const d = document.getElementById(prefix + '-desc-' + cid);
+  d.className = 'text-xs mt-2 p-2 rounded desc-' + b;
+  d.innerHTML = '<strong>' + BAND_LABEL[b] + ':</strong> ' + esc(c.bandas[b]);
+}
+function updateTotal(prefix, scores) {
+  const el = document.getElementById(prefix + '-total');
+  if (el) el.textContent = completo(scores) ? fmt(notaHoja(scores)) : '—';
+}
+function faltantes(prefix, scores) {
+  const miss = CRITERIA.filter(c => !Number.isInteger(scores[c.id]));
+  miss.forEach(c => document.getElementById(prefix + '-crit-' + c.id).classList.add('missing-score'));
+  return miss;
+}
+
+/* ===================== FLUJO DEL ESTUDIANTE ===================== */
+const ev = { paralelo:'', nombre:'', teamId:'', tipo:'auto', evaluado:'', scores:{} };
+
+function evOnParalelo() {
+  ev.paralelo = document.getElementById('ev-paralelo').value;
+  fillNombreSelect(document.getElementById('ev-nombre'), ev.paralelo);
+  evOnNombre();
+}
+function evOnNombre() {
+  ev.nombre = document.getElementById('ev-nombre').value;
+  const t = ev.nombre ? findGroupOf(ev.paralelo, ev.nombre) : null;
+  ev.teamId = t ? t.id : '';
+  const info = document.getElementById('ev-equipo-info');
+  if (!t) { info.classList.add('hidden'); document.getElementById('ev-form').classList.add('hidden'); document.getElementById('ev-cerrado').classList.add('hidden'); return; }
+  info.innerHTML = '<strong>' + esc(groupLabel(t.id)) + '</strong>: ' + esc(t.nordico) + ' vs. ' + esc(t.latam) + '<br><span class="text-slate-600">Integrantes: ' + esc(t.integrantes.join(', ')) + '</span>';
+  info.classList.remove('hidden');
+  evFillCoev();
+  evApplyLock();
+  evOnTipo();
+}
+function evFillCoev() {
+  const sel = document.getElementById('ev-evaluado'), cur = sel.value;
+  const otros = ev.paralelo ? teams[ev.paralelo].filter(t => t.id !== ev.teamId) : [];
+  sel.innerHTML = '<option value="">Elija el equipo</option>' + smap(otros, t => '<option value="' + t.id + '">' + esc(teamDesc(t)) + '</option>');
+  if (otros.some(t => t.id === cur)) sel.value = cur;
+}
+function evApplyLock() {
+  if (!ev.teamId) return;
+  const open = isOpen(ev.paralelo);
+  document.getElementById('ev-cerrado').classList.toggle('hidden', open);
+  document.getElementById('ev-form').classList.toggle('hidden', !open);
+}
+function evOnTipo() {
+  ev.tipo = document.querySelector('input[name="ev-tipo"]:checked').value;
+  document.getElementById('ev-coev-wrap').classList.toggle('hidden', ev.tipo !== 'coev');
+  renderEvalCard();
+}
+function evKey() { return ev.paralelo + '__' + ev.tipo + '__' + ev.teamId + '__' + ev.evaluado; }
+
+function renderEvalCard() {
+  const card = document.getElementById('ev-card');
+  ev.evaluado = ev.tipo === 'auto' ? ev.teamId : document.getElementById('ev-evaluado').value;
+  const t = findTeam(ev.evaluado);
+  if (!t || !ev.teamId) { card.innerHTML = ev.tipo === 'coev' ? '<p class="text-sm text-slate-500">Elija el equipo que van a coevaluar.</p>' : ''; return; }
+  if (t.paralelo !== ev.paralelo || (ev.tipo === 'coev' && t.id === ev.teamId)) { card.innerHTML = ''; return; }
+  const prev = allLogs.find(l => l.logId === evKey());
+  ev.scores = prev ? { A:prev.A, B:prev.B, C:prev.C, D:prev.D } : {};
+  card.innerHTML =
+    '<div class="border-2 border-teal-600 rounded-xl p-4">' +
+      '<h3 class="font-bold text-lg">' + (ev.tipo === 'auto' ? 'Autoevaluación de mi equipo' : 'Coevaluación') + ': ' + esc(teamDesc(t)) + '</h3>' +
+      '<p class="text-xs text-slate-500 mb-2">' + esc(t.paralelo) + ' · Integrantes: ' + esc(t.integrantes.join(', ')) + '</p>' +
+      (prev ? '<div class="p-2 mb-3 rounded bg-amber-100 border border-amber-400 text-amber-900 text-sm">Tu equipo ya registró esta evaluación (nota: ' + fmt(prev.notaHoja) + '). Si guardas de nuevo, se reemplaza.' +
+        (prev.autor ? ' <span class="text-xs">Último guardado: ' + esc(prev.autor) + ', ' + esc(fechaTxt(prev.timestamp)) + '.</span>' : '') + '</div>' : '') +
+      '<div id="ev-rubric"></div>' +
+      '<div class="flex flex-wrap items-center gap-4 mt-2">' +
+        '<div class="text-lg">Nota de la hoja: <strong id="ev-total">—</strong> <span class="text-sm text-slate-500">sobre 10</span></div>' +
+        '<button class="btn btn-primary" id="btn-guardar-eval" onclick="guardarEval()">' + (prev ? 'Guardar de nuevo (reemplaza)' : 'Guardar evaluación') + '</button>' +
+      '</div>' +
+    '</div>';
+  renderRubric(document.getElementById('ev-rubric'), 'ev', ev.scores, () => updateTotal('ev', ev.scores));
+  updateTotal('ev', ev.scores);
+}
+
+function guardarEval() {
+  if (!db) { showToast('No hay conexión con la base de datos.', 'err'); return; }
+  if (!ev.teamId || !ev.evaluado) { showToast('Elija su nombre y el equipo evaluado.', 'warn'); return; }
+  if (!isOpen(ev.paralelo)) { evApplyLock(); showToast('El tiempo para registrar evaluaciones ha finalizado.', 'err'); return; }
+  const tEv = findTeam(ev.evaluado);
+  if (!tEv || tEv.paralelo !== ev.paralelo || (ev.tipo === 'coev' && ev.evaluado === ev.teamId) || (ev.tipo === 'auto' && ev.evaluado !== ev.teamId)) {
+    showToast('Combinación de equipos no válida.', 'err'); return;
+  }
+  const miss = faltantes('ev', ev.scores);
+  if (miss.length) { showToast('Falta calificar: ' + miss.map(c => c.id + '. ' + c.nombre).join(', ') + '.', 'err'); return; }
+  const key = evKey();
+  const rec = { paralelo:ev.paralelo, tipo:ev.tipo, equipoEvaluador:ev.teamId, equipoEvaluado:ev.evaluado,
+    A:ev.scores.A, B:ev.scores.B, C:ev.scores.C, D:ev.scores.D, notaHoja:notaHoja(ev.scores),
+    autor:ev.nombre, timestamp:firebase.database.ServerValue.TIMESTAMP };
+  const btn = document.getElementById('btn-guardar-eval'); btn.disabled = true;
+  db.ref(DB_NODE + '/' + key).set(rec).then(() => {
+    btn.disabled = false; btn.textContent = 'Guardada (puedes corregirla)';
+    showToast('Evaluación guardada. Nota de la hoja: ' + fmt(rec.notaHoja) + '.', 'ok');
+  }).catch(e => { btn.disabled = false; showToast('No se pudo guardar: ' + e.message, 'err'); });
+}
+
+/* ===================== PANEL DOCENTE ===================== */
+let editTeams = null;
+const docSt = { paralelo:'', teamId:'', scores:{} };
+
+function docLogin() {
+  const v = document.getElementById('doc-pass').value;
+  if (v !== DOCENTE_PASS) { showToast('Contraseña incorrecta.', 'err'); return; }
+  docenteActivo = true;
+  document.getElementById('doc-login').classList.add('hidden');
+  document.getElementById('doc-panel').classList.remove('hidden');
+  document.getElementById('doc-pass').value = '';
+  if (db) {
+    let primera = true;
+    db.ref(CODES_NODE).on('value', s => { codigos = s.val() || {}; renderCodigos(); if (primera && loaded.teams) { primera = false; ensureCodigos(false); } });
+    db.ref(VIEWS_NODE).on('value', s => { vistas = s.val() || {}; renderCodigos(); });
+  }
+  ['doc-paralelo', 'cod-filtro', 'exp-filtro'].forEach((id, i) => fillParaleloSelect(document.getElementById(id), 'Elija el paralelo', i > 0));
+  recargarEditorEquipos();
+  fillPesosInputs(); renderLocks(); renderDocPanel();
+}
+function docLogout() {
+  docenteActivo = false;
+  if (db) { db.ref(CODES_NODE).off(); db.ref(VIEWS_NODE).off(); }
+  document.getElementById('doc-panel').classList.add('hidden');
+  document.getElementById('doc-login').classList.remove('hidden');
+  showTab('tab-intro');
+}
+function renderDocPanel() {
+  if (!docenteActivo) return;
+  renderSeguimiento(); renderStats(); renderNotas(); renderLogs(); renderCodigos();
+}
+
+/* --- 1. Interruptores por paralelo --- */
+function renderLocks() {
+  const el = document.getElementById('doc-locks'); if (!el || !docenteActivo) return;
+  el.innerHTML = smap(PARALELOS, p => {
+    const open = isOpen(p);
+    return '<div class="flex items-center gap-2 border rounded-lg px-3 py-2"><strong>' + p + '</strong> <span class="text-sm ' + (open ? 'text-green-700' : 'text-red-700') + '">' + (open ? 'Abierto' : 'Cerrado') + '</span>' +
+      '<button class="btn btn-sm ' + (open ? 'btn-danger' : 'btn-primary') + '" onclick="setLock(\'' + p + '\',' + (!open) + ')">' + (open ? 'Cerrar registro' : 'Abrir registro') + '</button></div>';
+  });
+}
+function setLock(p, open) {
+  if (!db) return;
+  db.ref(LOCK_NODE + '/' + p).set(open).then(() => showToast('Registro de ' + p + (open ? ' abierto.' : ' cerrado.'), 'ok'))
+    .catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* --- 2. Pesos --- */
+function fillPesosInputs() {
+  const d = document.getElementById('peso-doc'); if (!d) return;
+  d.value = pesos.docente; document.getElementById('peso-auto').value = pesos.auto; document.getElementById('peso-coev').value = pesos.coev; previewPesos();
+}
+function leerPesos() {
+  return { docente: Number(document.getElementById('peso-doc').value), auto: Number(document.getElementById('peso-auto').value), coev: Number(document.getElementById('peso-coev').value) };
+}
+function previewPesos() {
+  const p = leerPesos(), s = p.docente + p.auto + p.coev, el = document.getElementById('pesos-preview');
+  const ok = [p.docente, p.auto, p.coev].every(v => Number.isFinite(v) && v >= 0) && Math.abs(s - 100) < 1e-9;
+  el.className = 'text-xs mt-2 ' + (ok ? 'text-green-700' : 'text-red-700');
+  el.textContent = ok ? 'Suma 100. Ejemplo con hojas de 8, 9 y 7: ' + fmt(8 * p.docente / 100 + 9 * p.auto / 100 + 7 * p.coev / 100) + ' sobre 10.' : 'Los pesos deben ser no negativos y sumar 100 (suma actual: ' + s + ').';
+  return ok;
+}
+function guardarPesos() {
+  if (!previewPesos()) { showToast('Los pesos deben sumar 100.', 'err'); return; }
+  db.ref(CONFIG_NODE).set(leerPesos()).then(() => showToast('Pesos guardados; se aplican en todos los dispositivos.', 'ok'))
+    .catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* --- 3. Gestión de equipos --- */
+function recargarEditorEquipos() { editTeams = JSON.parse(JSON.stringify(teams)); renderTeamEditor(); }
+function renderTeamEditor() {
+  const el = document.getElementById('team-editor'); if (!el || !editTeams) return;
+  el.innerHTML = smap(PARALELOS, p =>
+    '<div class="mb-4"><h4 class="font-semibold">' + p + '</h4><div class="overflow-x-auto"><table class="data"><tr><th>N.º</th><th>País nórdico</th><th>País latinoamericano</th><th>Integrantes (separados por coma)</th><th></th></tr>' +
+    smap(editTeams[p], (t, i) => '<tr>' +
+      '<td><input type="number" min="1" class="field w-16" value="' + t.num + '" onchange="edTeam(\'' + p + '\',' + i + ',\'num\',this.value)"></td>' +
+      '<td><input class="field w-full" value="' + esc(t.nordico) + '" onchange="edTeam(\'' + p + '\',' + i + ',\'nordico\',this.value)"></td>' +
+      '<td><input class="field w-full" value="' + esc(t.latam) + '" onchange="edTeam(\'' + p + '\',' + i + ',\'latam\',this.value)"></td>' +
+      '<td><textarea class="field w-full text-xs" rows="2" onchange="edTeam(\'' + p + '\',' + i + ',\'integrantes\',this.value)">' + esc(t.integrantes.join(', ')) + '</textarea></td>' +
+      '<td><button class="btn btn-danger btn-sm" onclick="armButton(this,()=>edDelTeam(\'' + p + '\',' + i + '))">Quitar</button></td></tr>') +
+    '</table></div><button class="btn btn-sec btn-sm mt-1" onclick="edAddTeam(\'' + p + '\')">Agregar equipo a ' + p + '</button></div>');
+  validarEquipos();
+}
+function edTeam(p, i, campo, val) {
+  const t = editTeams[p][i];
+  if (campo === 'num') t.num = parseInt(val, 10);
+  else if (campo === 'integrantes') t.integrantes = val.split(',').map(s => s.trim()).filter(Boolean);
+  else t[campo] = val.trim();
+  validarEquipos();
+}
+function edAddTeam(p) {
+  const max = editTeams[p].reduce((m, t) => Math.max(m, t.num || 0), 0);
+  editTeams[p].push({ num: max + 1, paralelo: p, nordico: '', latam: '', integrantes: [] }); renderTeamEditor();
+}
+function edDelTeam(p, i) { editTeams[p].splice(i, 1); renderTeamEditor(); }
+function validarEquipos() {
+  const errs = [], seen = {}, counts = {};
+  PARALELOS.forEach(p => {
+    const nums = {};
+    counts[p] = { eq: editTeams[p].length, est: 0 };
+    editTeams[p].forEach(t => {
+      if (!Number.isInteger(t.num) || t.num < 1) errs.push(p + ': número de equipo no válido.');
+      else if (nums[t.num]) errs.push(p + ': el equipo ' + t.num + ' está repetido.');
+      nums[t.num] = true;
+      if (!t.nordico || !t.latam) errs.push(p + ' · Equipo ' + t.num + ': faltan países.');
+      if (!t.integrantes.length) errs.push(p + ' · Equipo ' + t.num + ': no tiene integrantes.');
+      t.integrantes.forEach(n => {
+        const k = safeKey(n).toLowerCase();
+        if (seen[k]) errs.push('Estudiante duplicado: ' + n + ' (' + seen[k] + ' y ' + p + ' · Equipo ' + t.num + ').');
+        seen[k] = p + ' · Equipo ' + t.num; counts[p].est++;
+      });
+    });
+  });
+  const total = PARALELOS.reduce((s, p) => s + counts[p].est, 0), totEq = PARALELOS.reduce((s, p) => s + counts[p].eq, 0);
+  const el = document.getElementById('team-validation');
+  el.innerHTML = '<div>' + PARALELOS.map(p => p + ': ' + counts[p].eq + ' equipos, ' + counts[p].est + ' estudiantes').join(' · ') + ' · Total: ' + totEq + ' equipos, ' + total + ' estudiantes.</div>' +
+    (errs.length ? '<div class="text-red-700 mt-1">' + errs.map(esc).join('<br>') + '</div>' : '<div class="text-green-700 mt-1">Sin duplicados ni equipos incompletos.</div>');
+  return errs;
+}
+function importarEquipos() {
+  const lines = document.getElementById('team-import').value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const nuevo = {}, errs = [];
+  lines.forEach((l, idx) => {
+    const c = l.split('|').map(s => s.trim());
+    const p = (c[0] || '').toUpperCase();
+    if (c.length < 5 || !PARALELOS.includes(p)) { errs.push('Línea ' + (idx + 1) + ' no válida.'); return; }
+    (nuevo[p] = nuevo[p] || []).push({ num: parseInt(c[1], 10), paralelo: p, nordico: c[2], latam: c[3], integrantes: c.slice(4).join('|').split(/,| - /).map(s => s.trim()).filter(Boolean) });
+  });
+  if (errs.length) { showToast(errs.join(' '), 'err'); return; }
+  Object.keys(nuevo).forEach(p => { editTeams[p] = nuevo[p].sort((a, b) => a.num - b.num); });
+  renderTeamEditor();
+  showToast('Importado al editor (' + Object.keys(nuevo).join(', ') + '). Revise y guarde en la nube.', 'info');
+}
+function exportarEquiposTexto() {
+  document.getElementById('team-import').value = PARALELOS.flatMap(p => editTeams[p].map(t => [p, t.num, t.nordico, t.latam, t.integrantes.join(', ')].join(' | '))).join('\n');
+}
+function guardarEquipos() {
+  const errs = validarEquipos();
+  if (errs.length) { showToast('Corrija los errores antes de guardar.', 'err'); return; }
+  const data = {};
+  PARALELOS.forEach(p => { data[p] = editTeams[p].slice().sort((a, b) => a.num - b.num).map(t => ({ num: t.num, nordico: t.nordico, latam: t.latam, integrantes: t.integrantes })); });
+  db.ref(TEAMS_NODE).set(data).then(() => { showToast('Equipos guardados en la nube.', 'ok'); recargarEditorEquipos(); })
+    .catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* --- 4. Heteroevaluación --- */
+function docOnParalelo() {
+  docSt.paralelo = document.getElementById('doc-paralelo').value;
+  const sel = document.getElementById('doc-equipo'), cur = sel.value;
+  const lista = docSt.paralelo ? teams[docSt.paralelo] : [];
+  sel.innerHTML = '<option value="">Elija el equipo</option>' + smap(lista, t => '<option value="' + t.id + '">' + esc(teamDesc(t)) + (docenteScores[t.id] ? ' · calificado' : '') + '</option>');
+  if (lista.some(t => t.id === cur)) sel.value = cur;
+  renderDocCard();
+}
+function renderDocCard() {
+  docSt.teamId = document.getElementById('doc-equipo').value;
+  const card = document.getElementById('doc-card'), t = findTeam(docSt.teamId);
+  if (!t) { card.innerHTML = ''; return; }
+  const prev = docenteScores[t.id];
+  docSt.scores = prev ? { A:prev.A, B:prev.B, C:prev.C, D:prev.D } : {};
+  card.innerHTML = '<div class="border-2 border-slate-700 rounded-xl p-4"><h4 class="font-bold">' + esc(groupLabel(t.id)) + ': ' + esc(t.nordico) + ' vs. ' + esc(t.latam) + '</h4>' +
+    '<p class="text-xs text-slate-500 mb-2">Integrantes: ' + esc(t.integrantes.join(', ')) + '</p>' +
+    (prev ? '<div class="p-2 mb-2 rounded bg-amber-100 border border-amber-400 text-sm">Ya calificado (nota: ' + fmt(prev.notaHoja) + ', ' + esc(fechaTxt(prev.timestamp)) + '). Si guarda de nuevo, se reemplaza.</div>' : '') +
+    '<div id="doc-rubric"></div><div class="flex flex-wrap gap-3 items-center"><div class="text-lg">Nota de la hoja: <strong id="doc-total">—</strong></div>' +
+    '<button class="btn btn-primary" id="btn-doc-guardar" onclick="docGuardarGrupo()">Guardar heteroevaluación</button>' +
+    (prev ? '<button class="btn btn-danger" onclick="armButton(this, docBorrarGrupo)">Borrar heteroevaluación</button>' : '') + '</div></div>';
+  renderRubric(document.getElementById('doc-rubric'), 'doc', docSt.scores, () => updateTotal('doc', docSt.scores));
+  updateTotal('doc', docSt.scores);
+}
+function docGuardarGrupo() {
+  const t = findTeam(docSt.teamId); if (!t) return;
+  const miss = faltantes('doc', docSt.scores);
+  if (miss.length) { showToast('Falta calificar: ' + miss.map(c => c.id).join(', ') + '.', 'err'); return; }
+  const rec = { paralelo:t.paralelo, A:docSt.scores.A, B:docSt.scores.B, C:docSt.scores.C, D:docSt.scores.D, notaHoja:notaHoja(docSt.scores), timestamp:firebase.database.ServerValue.TIMESTAMP };
+  db.ref(DOCENTE_NODE + '/' + t.id).set(rec).then(() => {
+    document.getElementById('btn-doc-guardar').textContent = 'Guardada (puede corregirla)';
+    showToast('Heteroevaluación guardada: ' + fmt(rec.notaHoja) + '.', 'ok');
+  }).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+function docBorrarGrupo() {
+  const id = docSt.teamId; if (!id) return;
+  db.ref(DOCENTE_NODE + '/' + id).remove().then(() => { showToast('Heteroevaluación borrada.', 'ok'); renderDocCard(); })
+    .catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* --- 5. Seguimiento --- */
+function renderSeguimiento() {
+  const el = document.getElementById('doc-seguimiento'); if (!el) return;
+  el.innerHTML = smap(PARALELOS, p => {
+    const ts = teams[p]; if (!ts.length) return '<p class="text-sm">' + p + ': sin equipos.</p>';
+    return '<div><h4 class="font-semibold">' + p + ' (abierto: ' + (isOpen(p) ? 'sí' : 'no') + ')</h4><div class="overflow-x-auto"><table class="data text-center"><tr><th>Evaluador \\ Evaluado</th>' +
+      smap(ts, t => '<th>E' + t.num + '</th>') + '<th>Docente</th></tr>' +
+      smap(ts, ev2 => '<tr><th>Equipo ' + ev2.num + '</th>' + smap(ts, ed => {
+        const tipo = ev2.id === ed.id ? 'auto' : 'coev';
+        const l = allLogs.find(x => x.logId === p + '__' + tipo + '__' + ev2.id + '__' + ed.id);
+        return '<td class="' + (l ? (tipo === 'auto' ? 'score-self' : 'score-ok') : 'score-miss') + '">' + (l ? fmt(l.notaHoja) : 'falta') + '</td>';
+      }) + '<td class="' + (docenteScores[ev2.id] ? 'score-ok' : 'score-miss') + '">' + (docenteScores[ev2.id] ? fmt(docenteScores[ev2.id].notaHoja) : 'falta') + '</td></tr>') + '</table></div></div>';
+  });
+}
+function renderStats() {
+  const el = document.getElementById('doc-stats'); if (!el) return;
+  el.innerHTML = '<table class="data"><tr><th>Paralelo</th><th>Equipos</th><th>Estudiantes</th><th>Autoevaluaciones</th><th>Coevaluaciones</th><th>Heteroevaluaciones</th><th>Notas finales completas</th><th>Promedio final</th></tr>' +
+    smap(PARALELOS, p => {
+      const ts = teams[p], n = ts.length, ids = ts.map(t => t.id);
+      const autos = allLogs.filter(l => l.paralelo === p && l.tipo === 'auto').length;
+      const coevs = allLogs.filter(l => l.paralelo === p && l.tipo === 'coev').length;
+      const docs = ids.filter(id => docenteScores[id]).length;
+      const res = ids.map(resultadoEquipo), comp = res.filter(r => r.final != null);
+      const est = ROSTER.filter(r => r.paralelo === p).length;
+      return '<tr><td>' + p + '</td><td>' + n + '</td><td>' + est + '</td><td>' + autos + ' / ' + n + '</td><td>' + coevs + ' / ' + (n * (n - 1)) + '</td><td>' + docs + ' / ' + n + '</td><td>' + comp.length + ' / ' + n + '</td><td>' + fmt(avg(comp.map(r => r.final))) + '</td></tr>';
+    }) + '</table>';
+}
+function renderLogs() {
+  const el = document.getElementById('logs-tabla'); if (!el) return;
+  const logs = allLogs.slice().sort((a, b) => a.paralelo.localeCompare(b.paralelo) || teamNum(a.equipoEvaluador) - teamNum(b.equipoEvaluador) || teamNum(a.equipoEvaluado) - teamNum(b.equipoEvaluado));
+  el.innerHTML = '<tr><th>Paralelo</th><th>Tipo</th><th>Evaluador</th><th>Evaluado</th><th>A</th><th>B</th><th>C</th><th>D</th><th>Nota</th><th>Autor</th><th>Fecha</th><th></th></tr>' +
+    (logs.length ? smap(logs, l => '<tr><td>' + esc(l.paralelo) + '</td><td>' + (l.tipo === 'auto' ? 'Autoevaluación' : 'Coevaluación') + '</td><td>' + esc(groupLabel(l.equipoEvaluador)) + '</td><td>' + esc(groupLabel(l.equipoEvaluado)) +
+      '</td><td>' + l.A + '</td><td>' + l.B + '</td><td>' + l.C + '</td><td>' + l.D + '</td><td>' + fmt(l.notaHoja) + '</td><td>' + esc(l.autor) + '</td><td>' + esc(fechaTxt(l.timestamp)) +
+      '</td><td><button class="btn btn-danger btn-sm" onclick="armButton(this,()=>borrarLog(\'' + l.logId + '\'))">Borrar</button></td></tr>')
+      : '<tr><td colspan="12" class="text-center text-slate-500">Sin registros.</td></tr>');
+}
+function borrarLog(id) {
+  db.ref(DB_NODE + '/' + id).remove().then(() => showToast('Registro borrado.', 'ok')).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+function clearCloudData() {
+  db.ref(DB_NODE).remove().then(() => showToast('Se borraron las autoevaluaciones y coevaluaciones de esta actividad.', 'ok'))
+    .catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* --- 6. Códigos --- */
+function ensureCodigos(manual) {
+  if (!db || !docenteActivo) return;
+  const used = new Set(Object.values(codigos)), upd = {};
+  ROSTER.forEach(r => { if (!codigos[r.key]) { let c; do { c = genCode(); } while (used.has(c)); used.add(c); upd[r.key] = c; } });
+  const n = Object.keys(upd).length;
+  if (!n) { if (manual) showToast('Todos los estudiantes ya tienen código.', 'info'); return; }
+  db.ref(CODES_NODE).update(upd).then(() => showToast(n + ' código(s) generado(s).', 'ok')).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+function filtroCod() { const f = document.getElementById('cod-filtro').value; return ROSTER.filter(r => !f || r.paralelo === f); }
+function mensajeCodigo(r) {
+  return 'Estimado/a ' + r.nombre + ': su código personal para consultar el informe del proyecto colaborativo de la Unidad 3 (Países nórdicos vs. América Latina y el Caribe) es ' + (codigos[r.key] || '') +
+    '. Ingrese en la pestaña «Mi informe», elija su paralelo y su nombre, y escriba el código. El informe se puede ver una sola vez; descárguelo o imprímalo al abrirlo.';
+}
+function renderCodigos() {
+  const el = document.getElementById('cod-tabla'); if (!el || !docenteActivo) return;
+  const lista = filtroCod();
+  el.innerHTML = '<tr><th>Paralelo</th><th>Equipo</th><th>Estudiante</th><th>Código</th><th>Informe visto</th><th>Acciones</th></tr>' +
+    (lista.length ? smap(lista, r => {
+      const v = vistas[r.key];
+      return '<tr><td>' + r.paralelo + '</td><td>' + teamNum(r.teamId) + '</td><td>' + esc(r.nombre) + '</td><td class="font-mono">' + esc(codigos[r.key] || '—') + '</td><td>' + (v ? 'Sí, ' + esc(fechaTxt(v.ts)) : 'No') + '</td><td class="whitespace-nowrap">' +
+        '<button class="btn btn-sec btn-sm" onclick="copyText(codigos[\'' + r.key + '\']||\'\')">Copiar</button> ' +
+        '<button class="btn btn-sec btn-sm" onclick="copiarCorreo(\'' + r.key + '\')">Copiar correo</button> ' +
+        '<button class="btn btn-sec btn-sm" onclick="armButton(this,()=>regenerarCodigo(\'' + r.key + '\'))">Regenerar</button> ' +
+        (v ? '<button class="btn btn-primary btn-sm" onclick="resetVista(\'' + r.key + '\')">Restablecer vista</button>' : '') + '</td></tr>';
+    }) : '<tr><td colspan="6" class="text-center text-slate-500">Sin estudiantes.</td></tr>');
+}
+function copiarCorreo(key) { const r = ROSTER.find(x => x.key === key); if (r) copyText(mensajeCodigo(r)); }
+function copiarListaCodigos() { copyText(filtroCod().map(r => [r.paralelo, 'Equipo ' + teamNum(r.teamId), r.nombre, codigos[r.key] || ''].join('\t')).join('\n')); }
+function regenerarCodigo(key) {
+  const used = new Set(Object.values(codigos)); let c; do { c = genCode(); } while (used.has(c));
+  db.ref(CODES_NODE + '/' + key).set(c).then(() => showToast('Código regenerado.', 'ok')).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+function resetVista(key) {
+  db.ref(VIEWS_NODE + '/' + key).remove().then(() => showToast('Vista restablecida: el estudiante puede abrir su informe otra vez.', 'ok')).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+function resetAllViews() {
+  const upd = {}; filtroCod().forEach(r => { if (vistas[r.key]) upd[r.key] = null; });
+  if (!Object.keys(upd).length) { showToast('No hay vistas que restablecer en este filtro.', 'info'); return; }
+  db.ref(VIEWS_NODE).update(upd).then(() => showToast('Vistas restablecidas.', 'ok')).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* ===================== NOTAS, RESUMEN Y EXPORTACIONES ===================== */
+const COLS_RESUMEN = ['Paralelo','Equipo','País nórdico','País latinoamericano','Estudiante','Doc A','Doc B','Doc C','Doc D','Nota docente','Auto A','Auto B','Auto C','Auto D','Nota auto','Coev A','Coev B','Coev C','Coev D','Nota coev','N.º coev','Aporte docente','Aporte auto','Aporte coev','Nota final','Retroalimentación'];
+const COLS_DETALLE = ['Paralelo','Tipo','Equipo evaluador','Equipo evaluado','A','B','C','D','Nota hoja','Autor','Fecha'];
+
+function filasResumen(filtro) {
+  return ROSTER.filter(r => !filtro || r.paralelo === filtro).map(r => {
+    const res = resultadoEquipo(r.teamId), t = res.team, d = res.doc, a = res.auto, c = res.coevAvg;
+    return [r.paralelo, t.num, t.nordico, t.latam, r.nombre,
+      d ? d.A : null, d ? d.B : null, d ? d.C : null, d ? d.D : null, r1(res.nd),
+      a ? a.A : null, a ? a.B : null, a ? a.C : null, a ? a.D : null, r1(res.na),
+      c ? r1(c.A) : null, c ? r1(c.B) : null, c ? r1(c.C) : null, c ? r1(c.D) : null, r1(res.nc), res.coevs.length,
+      r1(res.ap.d), r1(res.ap.a), r1(res.ap.c), res.final != null ? r1(res.final) : res.estado, buildFeedback(res)];
+  });
+}
+function filasDetalle(filtro) {
+  return allLogs.filter(l => !filtro || l.paralelo === filtro)
+    .sort((a, b) => a.paralelo.localeCompare(b.paralelo) || a.tipo.localeCompare(b.tipo) || teamNum(a.equipoEvaluador) - teamNum(b.equipoEvaluador) || teamNum(a.equipoEvaluado) - teamNum(b.equipoEvaluado))
+    .map(l => [l.paralelo, l.tipo === 'auto' ? 'Autoevaluación' : 'Coevaluación', groupLabel(l.equipoEvaluador), groupLabel(l.equipoEvaluado), l.A, l.B, l.C, l.D, r1(l.notaHoja), l.autor || '', fechaTxt(l.timestamp)]);
+}
+function cellTxt(v) { return v == null ? '' : typeof v === 'number' ? String(v).replace('.', ',') : String(v); }
+function renderNotas() {
+  const el = document.getElementById('notas-tabla'); if (!el || !docenteActivo) return;
+  const filas = filasResumen(document.getElementById('exp-filtro').value);
+  el.innerHTML = '<tr>' + smap(COLS_RESUMEN, h => '<th>' + esc(h) + '</th>') + '</tr>' +
+    (filas.length ? smap(filas, f => '<tr>' + smap(f, (v, i) => '<td' + (i === 24 ? ' class="font-bold"' : '') + (i === 25 ? ' style="min-width:22rem"' : '') + '>' + esc(cellTxt(v)) + '</td>') + '</tr>')
+      : '<tr><td colspan="' + COLS_RESUMEN.length + '" class="text-center text-slate-500">Sin estudiantes.</td></tr>');
+}
+function descargar(nombre, contenido, mime) {
+  const blob = contenido instanceof Blob ? contenido : new Blob([contenido], { type: mime });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function exportCSV() {
+  const f = document.getElementById('exp-filtro').value;
+  const q = v => { const s = cellTxt(v); return /[";\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const csv = [COLS_RESUMEN].concat(filasResumen(f)).map(r => r.map(q).join(';')).join('\r\n');
+  descargar('Reporte_U3_Nordicos_ALC.csv', '﻿' + csv, 'text/csv;charset=utf-8');
+}
+
+/* XLSX construido a mano: ZIP sin compresión + XML de hojas y estilos. */
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function zipStore(files) {
+  const enc = new TextEncoder(), chunks = [], central = []; let offset = 0;
+  files.forEach(f => {
+    const name = enc.encode(f.name), data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, crc = crc32(data);
+    const lh = new Uint8Array(30 + name.length), dv = new DataView(lh.buffer);
+    dv.setUint32(0, 0x04034b50, true); dv.setUint16(4, 20, true); dv.setUint16(6, 0x0800, true); dv.setUint16(8, 0, true);
+    dv.setUint16(10, 0, true); dv.setUint16(12, 33, true); dv.setUint32(14, crc, true); dv.setUint32(18, data.length, true);
+    dv.setUint32(22, data.length, true); dv.setUint16(26, name.length, true); dv.setUint16(28, 0, true); lh.set(name, 30);
+    const ch = new Uint8Array(46 + name.length), cv = new DataView(ch.buffer);
+    cv.setUint32(0, 0x02014b50, true); cv.setUint16(4, 20, true); cv.setUint16(6, 20, true); cv.setUint16(8, 0x0800, true); cv.setUint16(10, 0, true);
+    cv.setUint16(12, 0, true); cv.setUint16(14, 33, true); cv.setUint32(16, crc, true); cv.setUint32(20, data.length, true); cv.setUint32(24, data.length, true);
+    cv.setUint16(28, name.length, true); cv.setUint32(42, offset, true); ch.set(name, 46);
+    chunks.push(lh, data); central.push(ch); offset += lh.length + data.length;
+  });
+  const cdSize = central.reduce((s, c) => s + c.length, 0), end = new Uint8Array(22), ev2 = new DataView(end.buffer);
+  ev2.setUint32(0, 0x06054b50, true); ev2.setUint16(8, files.length, true); ev2.setUint16(10, files.length, true); ev2.setUint32(12, cdSize, true); ev2.setUint32(16, offset, true);
+  return new Blob(chunks.concat(central, [end]), { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+}
+function xmlEsc(s) { return String(s).replace(/[&<>"]/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[ch])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''); }
+function colLetter(i) { let s = ''; i++; while (i > 0) { const m = (i - 1) % 26; s = String.fromCharCode(65 + m) + s; i = Math.floor((i - 1) / 26); } return s; }
+function sheetXml(rows) {
+  const body = rows.map((r, ri) => '<row r="' + (ri + 1) + '">' + r.map((v, ci) => {
+    const ref = colLetter(ci) + (ri + 1), st = ri === 0 ? ' s="1"' : '';
+    if (v == null || v === '') return '';
+    if (typeof v === 'number' && isFinite(v)) return '<c r="' + ref + '"' + st + '><v>' + v + '</v></c>';
+    return '<c r="' + ref + '" t="inlineStr"' + st + '><is><t xml:space="preserve">' + xmlEsc(v) + '</t></is></c>';
+  }).join('') + '</row>').join('');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetData>' + body + '</sheetData></worksheet>';
+}
+function xlsxBlob(sheets) {
+  const ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>' +
+    sheets.map((s, i) => '<Override PartName="/xl/worksheets/sheet' + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('') + '</Types>';
+  const rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  const wb = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+    sheets.map((s, i) => '<sheet name="' + xmlEsc(s.name) + '" sheetId="' + (i + 1) + '" r:id="rId' + (i + 1) + '"/>').join('') + '</sheets></workbook>';
+  const wbRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+    sheets.map((s, i) => '<Relationship Id="rId' + (i + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet' + (i + 1) + '.xml"/>').join('') +
+    '<Relationship Id="rId' + (sheets.length + 1) + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+  const styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F3A5F"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs></styleSheet>';
+  const files = [{ name:'[Content_Types].xml', data:ct }, { name:'_rels/.rels', data:rels }, { name:'xl/workbook.xml', data:wb }, { name:'xl/_rels/workbook.xml.rels', data:wbRels }, { name:'xl/styles.xml', data:styles }]
+    .concat(sheets.map((s, i) => ({ name:'xl/worksheets/sheet' + (i + 1) + '.xml', data:sheetXml(s.rows) })));
+  return zipStore(files);
+}
+function exportXLSX() {
+  const f = document.getElementById('exp-filtro').value;
+  descargar('Reporte_U3_Nordicos_ALC.xlsx', xlsxBlob([{ name:'Resumen', rows:[COLS_RESUMEN].concat(filasResumen(f)) }, { name:'Detalle', rows:[COLS_DETALLE].concat(filasDetalle(f)) }]));
+}
+
+/* ===================== INFORME INDIVIDUAL (UNA SOLA VISTA) ===================== */
+function infOnParalelo() { fillNombreSelect(document.getElementById('inf-nombre'), document.getElementById('inf-paralelo').value); }
+
+function verMiInforme() {
+  if (!db) { showToast('No hay conexión con la base de datos.', 'err'); return; }
+  if (!(loaded.teams && loaded.logs && loaded.docente && loaded.pesos)) { showToast('Los datos aún se están cargando; intente en unos segundos.', 'warn'); return; }
+  const p = document.getElementById('inf-paralelo').value, nombre = document.getElementById('inf-nombre').value;
+  const code = document.getElementById('inf-codigo').value.trim().toUpperCase();
+  const r = ROSTER.find(x => x.paralelo === p && x.nombre === nombre);
+  if (!r) { showToast('Elija su paralelo y su nombre.', 'warn'); return; }
+  if (code.length !== 6) { showToast('El código tiene seis caracteres.', 'warn'); return; }
+  const btn = document.getElementById('btn-ver-informe'); btn.disabled = true;
+  db.ref(CODES_NODE + '/' + r.key).once('value').then(s => {
+    if (!s.val() || s.val() !== code) { showToast('El código no corresponde a este estudiante.', 'err'); return null; }
+    const res = resultadoEquipo(r.teamId);
+    if (!res.doc) { showToast('Su informe aún no está disponible: falta la nota del docente.', 'warn'); return null; }
+    return db.ref(VIEWS_NODE + '/' + r.key).transaction(cur => cur ? undefined : { ts: firebase.database.ServerValue.TIMESTAMP })
+      .then(tx => {
+        if (!tx.committed) { showToast('Este informe ya fue consultado. Solicite al docente que restablezca su acceso.', 'err'); return; }
+        consultaUnlockedStudent = r.key;
+        informeActual = { nombre: r.nombre, paralelo: r.paralelo, res, feedback: buildFeedback(res), fecha: new Date(), pesos: Object.assign({}, pesos) };
+        document.getElementById('informe-print').innerHTML = informeHTML(informeActual);
+        document.getElementById('informe-overlay').classList.add('open');
+        document.getElementById('inf-codigo').value = '';
+      });
+  }).catch(e => showToast('Error: ' + e.message, 'err')).finally(() => { btn.disabled = false; });
+}
+function cerrarInforme() {
+  document.getElementById('informe-overlay').classList.remove('open');
+  document.getElementById('informe-print').innerHTML = '';
+  informeActual = null; consultaUnlockedStudent = null;
+}
+function filaHoja(label, s, nota, extra) {
+  return '<tr><td>' + label + '</td>' + ['A', 'B', 'C', 'D'].map(k => '<td style="text-align:center">' + (s && s[k] != null ? fmt(s[k]).replace(',0', '') : '—') + '</td>').join('') +
+    '<td style="text-align:center"><strong>' + fmt(nota) + '</strong></td><td>' + (extra || '') + '</td></tr>';
+}
+function informeHTML(inf) {
+  const res = inf.res, t = res.team, pw = inf.pesos;
+  const th = 'style="border:1px solid #94a3b8;padding:6px;background:#f1f5f9;text-align:left"';
+  const tb = 'style="border-collapse:collapse;width:100%;font-size:14px;margin:8px 0"';
+  const fix = h => h.replace(/<td/g, '<td style="border:1px solid #94a3b8;padding:6px"').replace(/<td style="border:1px solid #94a3b8;padding:6px" style="/g, '<td style="border:1px solid #94a3b8;padding:6px;');
+  return '<div style="font-family:system-ui,Segoe UI,Arial,sans-serif;color:#0f172a">' +
+    '<p style="font-size:12px;color:#475569;margin:0">Logos Academy · Historia / Individuos y Sociedades · 3.° BGU</p>' +
+    '<h2 style="font-size:20px;margin:4px 0 2px">Informe individual: Proyecto colaborativo de cierre, Unidad 3</h2>' +
+    '<p style="margin:0 0 10px">Países nórdicos vs. América Latina y el Caribe</p>' +
+    '<p><strong>Estudiante:</strong> ' + esc(inf.nombre) + '<br><strong>Paralelo:</strong> ' + esc(inf.paralelo) + ' · <strong>Equipo:</strong> ' + t.num +
+    '<br><strong>Países comparados:</strong> ' + esc(t.nordico) + ' vs. ' + esc(t.latam) + '<br><strong>Fecha de consulta:</strong> ' + esc(inf.fecha.toLocaleString('es-EC')) + '</p>' +
+    '<table ' + tb + '><tr><th ' + th + '>Hoja</th><th ' + th + '>A</th><th ' + th + '>B</th><th ' + th + '>C</th><th ' + th + '>D</th><th ' + th + '>Nota de la hoja</th><th ' + th + '>Observación</th></tr>' +
+    fix(filaHoja('Docente (heteroevaluación)', res.doc, res.nd, 'Nota oficial IB PAI') +
+      filaHoja('Autoevaluación del equipo', res.auto, res.na, res.auto ? '' : 'No registrada') +
+      filaHoja('Coevaluación (promedio)', res.coevAvg, res.nc, res.coevs.length + ' evaluación(es) recibida(s)')) + '</table>' +
+    '<table ' + tb + '><tr><th ' + th + '>Componente</th><th ' + th + '>Cálculo</th><th ' + th + '>Aporte</th></tr>' +
+    fix('<tr><td>Docente</td><td>' + fmt(res.nd) + ' × ' + String(pw.docente / 10).replace('.', ',') + ' ÷ 10</td><td>' + fmt(res.ap.d) + '</td></tr>' +
+      '<tr><td>Autoevaluación</td><td>' + fmt(res.na) + ' × ' + String(pw.auto / 10).replace('.', ',') + ' ÷ 10</td><td>' + fmt(res.ap.a) + '</td></tr>' +
+      '<tr><td>Coevaluación</td><td>' + fmt(res.nc) + ' × ' + String(pw.coev / 10).replace('.', ',') + ' ÷ 10</td><td>' + fmt(res.ap.c) + '</td></tr>' +
+      '<tr><td><strong>Nota final de la actividad</strong></td><td>Suma de los aportes</td><td><strong>' + (res.final != null ? fmt(res.final) + ' sobre 10' : esc(res.estado)) + '</strong></td></tr>') + '</table>' +
+    '<p style="font-size:12px;color:#475569">Las cifras se muestran redondeadas a un decimal; la nota final se calcula con todos los decimales, por lo que puede diferir en una décima de la suma de los aportes mostrados.</p>' +
+    '<h3 style="font-size:16px;margin:12px 0 4px">Retroalimentación</h3><p style="line-height:1.5">' + esc(inf.feedback) + '</p>' +
+    '<p style="font-size:12px;color:#475569;margin-top:12px">La nota oficial IB PAI la otorga solo el docente. La autoevaluación y la coevaluación forman parte de la nota institucional de la actividad.</p></div>';
+}
+function informeTXT(inf) {
+  const res = inf.res, t = res.team, pw = inf.pesos, s = o => o ? ['A', 'B', 'C', 'D'].map(k => k + ' ' + fmt(o[k]).replace(',0', '')).join(', ') : 'no registrada';
+  return ['Logos Academy - Historia / Individuos y Sociedades - 3.° BGU', 'Informe individual: Proyecto colaborativo de cierre, Unidad 3', 'Países nórdicos vs. América Latina y el Caribe', '',
+    'Estudiante: ' + inf.nombre, 'Paralelo: ' + inf.paralelo + '   Equipo: ' + t.num, 'Países comparados: ' + t.nordico + ' vs. ' + t.latam, 'Fecha de consulta: ' + inf.fecha.toLocaleString('es-EC'), '',
+    'Docente (nota oficial IB PAI): ' + s(res.doc) + '. Nota de la hoja: ' + fmt(res.nd),
+    'Autoevaluación del equipo: ' + s(res.auto) + '. Nota de la hoja: ' + fmt(res.na),
+    'Coevaluación (promedio de ' + res.coevs.length + ' evaluación(es)): ' + s(res.coevAvg) + '. Nota: ' + fmt(res.nc), '',
+    'Aporte docente: ' + fmt(res.nd) + ' x ' + String(pw.docente / 10).replace('.', ',') + ' / 10 = ' + fmt(res.ap.d),
+    'Aporte autoevaluación: ' + fmt(res.na) + ' x ' + String(pw.auto / 10).replace('.', ',') + ' / 10 = ' + fmt(res.ap.a),
+    'Aporte coevaluación: ' + fmt(res.nc) + ' x ' + String(pw.coev / 10).replace('.', ',') + ' / 10 = ' + fmt(res.ap.c),
+    'NOTA FINAL DE LA ACTIVIDAD: ' + (res.final != null ? fmt(res.final) + ' sobre 10' : res.estado), 'Las cifras se muestran redondeadas a un decimal; la nota final se calcula con todos los decimales.', '',
+    'Retroalimentación:', inf.feedback, '',
+    'La nota oficial IB PAI la otorga solo el docente. La autoevaluación y la coevaluación forman parte de la nota institucional de la actividad.'].join('\r\n');
+}
+function descargarInforme(tipo) {
+  if (!informeActual) return;
+  const base = 'Informe_U3_' + safeKey(informeActual.nombre);
+  if (tipo === 'txt') return descargar(base + '.txt', '﻿' + informeTXT(informeActual), 'text/plain;charset=utf-8');
+  if (tipo === 'html') return descargar(base + '.html', '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>' + esc(base) + '</title></head><body style="max-width:52rem;margin:2rem auto">' + informeHTML(informeActual) + '</body></html>', 'text/html;charset=utf-8');
+  if (!window.jspdf) { showToast('No se pudo cargar el generador de PDF; use Imprimir y elija Guardar como PDF.', 'err'); return; }
+  const pdf = new window.jspdf.jsPDF({ unit:'mm', format:'a4' });
+  const lines = informeTXT(informeActual).replace(/—/g, '-').split('\r\n');
+  let y = 18; pdf.setFont('helvetica', 'normal'); pdf.setFontSize(11);
+  lines.forEach((ln, i) => {
+    pdf.setFont('helvetica', (i < 3 || /^NOTA FINAL|^Retroalimentación/.test(ln)) ? 'bold' : 'normal');
+    pdf.splitTextToSize(ln || ' ', 180).forEach(part => { if (y > 280) { pdf.addPage(); y = 18; } pdf.text(part, 15, y); y += 6; });
+  });
+  pdf.save(base + '.pdf');
+}
+
+/* ===================== REACCIONES A CAMBIOS DE DATOS ===================== */
+function onTeamsChange() {
+  fillNombreSelect(document.getElementById('ev-nombre'), ev.paralelo);
+  fillNombreSelect(document.getElementById('inf-nombre'), document.getElementById('inf-paralelo').value);
+  if (ev.nombre && document.getElementById('ev-nombre').value !== ev.nombre) evOnNombre();
+  else if (ev.teamId) evFillCoev();
+  if (docenteActivo) { if (!editTeams || !PARALELOS.some(p => editTeams[p].length)) recargarEditorEquipos(); docOnParalelo(); ensureCodigos(false); }
+  onDataChange();
+}
+function onDataChange() { renderDocPanel(); }
+
+/* ===================== INICIO ===================== */
+renderIntroRubrica();
+renderIntroPesos();
+fillParaleloSelect(document.getElementById('ev-paralelo'), 'Elija su paralelo');
+fillParaleloSelect(document.getElementById('inf-paralelo'), 'Elija su paralelo');
+attachListeners();
+</script>
+</body>
+</html>
