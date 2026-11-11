@@ -206,7 +206,7 @@
       </div>
 
       <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">5. Seguimiento</h3>
-        <p class="text-xs text-slate-600 mb-2">Filas: equipo evaluador. Columnas: equipo evaluado. La diagonal es la autoevaluación.</p>
+        <p class="text-xs text-slate-600 mb-2">Filas: equipo evaluador. Columnas: equipo evaluado. La diagonal es la autoevaluación. «Eliminar» requiere doble clic: el primer clic muestra «¿Confirmar?» y el segundo, dentro de 6 segundos, borra.</p>
         <div id="doc-seguimiento" class="space-y-4"></div>
       </div>
 
@@ -848,8 +848,12 @@ function renderSeguimiento() {
       smap(ts, ev2 => '<tr><th>Equipo ' + ev2.num + '</th>' + smap(ts, ed => {
         const tipo = ev2.id === ed.id ? 'auto' : 'coev';
         const l = allLogs.find(x => x.logId === p + '__' + tipo + '__' + ev2.id + '__' + ed.id);
-        return '<td class="' + (l ? (tipo === 'auto' ? 'score-self' : 'score-ok') : 'score-miss') + '">' + (l ? fmt(l.notaHoja) : 'falta') + '</td>';
-      }) + '<td class="' + (docenteScores[ev2.id] ? 'score-ok' : 'score-miss') + '">' + (docenteScores[ev2.id] ? fmt(docenteScores[ev2.id].notaHoja) : 'falta') + '</td></tr>') + '</table></div></div>';
+        return '<td class="' + (l ? (tipo === 'auto' ? 'score-self' : 'score-ok') : 'score-miss') + '">' + (l ? fmt(l.notaHoja) +
+          ' <button class="btn btn-danger btn-sm ml-1" title="Eliminar este registro" onclick="armButton(this,()=>borrarLog(\'' + l.logId + '\'))">Eliminar</button>' : 'falta') + '</td>';
+      }) + '<td class="whitespace-nowrap ' + (docenteScores[ev2.id] ? 'score-ok' : 'score-miss') + '">' + (docenteScores[ev2.id] ? fmt(docenteScores[ev2.id].notaHoja) +
+          ' <button class="btn btn-primary btn-sm ml-1" onclick="geEditarDocente(\'' + ev2.id + '\')">Modificar</button>' +
+          ' <button class="btn btn-danger btn-sm" onclick="armButton(this,()=>geBorrarDocente(\'' + ev2.id + '\'))">Eliminar</button>'
+          : 'falta <button class="btn btn-sec btn-sm ml-1" onclick="geEditarDocente(\'' + ev2.id + '\')">Calificar</button>') + '</td></tr>') + '</table></div></div>';
   });
 }
 function renderStats() {
