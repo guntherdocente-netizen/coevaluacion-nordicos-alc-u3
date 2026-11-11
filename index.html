@@ -81,7 +81,7 @@
       <li>Ingrese a la pestaña <strong>Evaluación</strong>, elija su paralelo y luego su nombre. La aplicación mostrará su equipo y los países asignados.</li>
       <li>Elija <strong>Autoevaluación (mi equipo)</strong> o <strong>Coevaluación</strong> de otro equipo de su paralelo.</li>
       <li>Califique cada criterio de 0 a 10 leyendo el descriptor que aparece al elegir cada valor. Pónganse de acuerdo como equipo: la evaluación es del equipo, no individual.</li>
-      <li>Guarde. Si otro integrante de su equipo guarda la misma evaluación, se reemplaza la anterior.</li>
+      <li>Revise y pulse <strong>Registrar evaluación</strong>; luego confirme. <strong>Cada evaluación se registra una sola vez por equipo y queda definitiva: no se puede modificar.</strong> Pónganse de acuerdo antes de confirmar. Si hubo un error, solo el docente puede eliminar el registro para que se repita.</li>
       <li>Cuando el docente lo indique, consulte su resultado en <strong>Mi informe</strong> con su código personal. <strong>El informe se puede ver una sola vez</strong>; descárguelo o imprímalo en ese momento.</li>
     </ol>
 
@@ -197,6 +197,12 @@
           <label>Equipo<select id="doc-equipo" class="field w-full" onchange="renderDocCard()"></select></label>
         </div>
         <div id="doc-card"></div>
+      </div>
+
+      <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">4b. Gestión de evaluaciones por grupo</h3>
+        <p class="text-xs text-slate-600 mb-2">Elimine solo la autoevaluación de un grupo, una coevaluación de un grupo hacia otro, o modifique o elimine la heteroevaluación del docente. Al eliminar un registro de estudiantes, el equipo puede volver a registrarlo una sola vez (si el paralelo está habilitado). Doble clic para confirmar.</p>
+        <div class="flex flex-wrap gap-2 mb-3 text-sm"><select id="ge-par" class="field" onchange="geFiltroEquipos()"></select><select id="ge-eq" class="field" onchange="renderGestion()"><option value="">Elija el equipo</option></select></div>
+        <div id="ge-detalle" class="space-y-2"></div>
       </div>
 
       <div class="border rounded-lg p-4"><h3 class="font-bold mb-2">5. Seguimiento</h3>
@@ -567,7 +573,7 @@ function evOnNombre() {
 function evFillCoev() {
   const sel = document.getElementById('ev-evaluado'), cur = sel.value;
   const otros = ev.paralelo ? teams[ev.paralelo].filter(t => t.id !== ev.teamId) : [];
-  sel.innerHTML = '<option value="">Elija el equipo</option>' + smap(otros, t => '<option value="' + t.id + '">' + esc(teamDesc(t)) + '</option>');
+  sel.innerHTML = '<option value="">Elija el equipo</option>' + smap(otros, t => '<option value="' + t.id + '">' + esc(teamDesc(t)) + (allLogs.some(l => l.logId === ev.paralelo + '__coev__' + ev.teamId + '__' + t.id) ? ' · ya registrada' : '') + '</option>');
   if (otros.some(t => t.id === cur)) sel.value = cur;
 }
 function evApplyLock() {
@@ -590,42 +596,61 @@ function renderEvalCard() {
   if (!t || !ev.teamId) { card.innerHTML = ev.tipo === 'coev' ? '<p class="text-sm text-slate-500">Elija el equipo que van a coevaluar.</p>' : ''; return; }
   if (t.paralelo !== ev.paralelo || (ev.tipo === 'coev' && t.id === ev.teamId)) { card.innerHTML = ''; return; }
   const prev = allLogs.find(l => l.logId === evKey());
-  ev.scores = prev ? { A:prev.A, B:prev.B, C:prev.C, D:prev.D } : {};
-  card.innerHTML =
-    '<div class="border-2 border-teal-600 rounded-xl p-4">' +
-      '<h3 class="font-bold text-lg">' + (ev.tipo === 'auto' ? 'Autoevaluación de mi equipo' : 'Coevaluación') + ': ' + esc(teamDesc(t)) + '</h3>' +
-      '<p class="text-xs text-slate-500 mb-2">' + esc(t.paralelo) + ' · Integrantes: ' + esc(t.integrantes.join(', ')) + '</p>' +
-      (prev ? '<div class="p-2 mb-3 rounded bg-amber-100 border border-amber-400 text-amber-900 text-sm">Tu equipo ya registró esta evaluación (nota: ' + fmt(prev.notaHoja) + '). Si guardas de nuevo, se reemplaza.' +
-        (prev.autor ? ' <span class="text-xs">Último guardado: ' + esc(prev.autor) + ', ' + esc(fechaTxt(prev.timestamp)) + '.</span>' : '') + '</div>' : '') +
-      '<div id="ev-rubric"></div>' +
-      '<div class="flex flex-wrap items-center gap-4 mt-2">' +
-        '<div class="text-lg">Nota de la hoja: <strong id="ev-total">—</strong> <span class="text-sm text-slate-500">sobre 10</span></div>' +
-        '<button class="btn btn-primary" id="btn-guardar-eval" onclick="guardarEval()">' + (prev ? 'Guardar de nuevo (reemplaza)' : 'Guardar evaluación') + '</button>' +
-      '</div>' +
-    '</div>';
-  renderRubric(document.getElementById('ev-rubric'), 'ev', ev.scores, () => updateTotal('ev', ev.scores));
+  const titulo = '<h3 class="font-bold text-lg">' + (ev.tipo === 'auto' ? 'Autoevaluación de mi equipo' : 'Coevaluación') + ': ' + esc(teamDesc(t)) + '</h3>' +
+    '<p class="text-xs text-slate-500 mb-2">' + esc(t.paralelo) + ' · Integrantes: ' + esc(t.integrantes.join(', ')) + '</p>';
+  if (prev) {
+    card.innerHTML = '<div class="border-2 border-slate-400 rounded-xl p-4">' + titulo +
+      '<div class="p-3 rounded bg-slate-100 border border-slate-300 text-sm">Esta evaluación ya fue registrada y confirmada' + (prev.autor ? ' por ' + esc(prev.autor) : '') + (prev.timestamp ? ' el ' + esc(fechaTxt(prev.timestamp)) : '') +
+      '. <strong>El registro es definitivo y no admite cambios.</strong> Si hubo un error, solicite al docente que lo elimine.</div>' +
+      '<table class="data mt-3"><tr><th>A</th><th>B</th><th>C</th><th>D</th><th>Nota de la hoja</th></tr><tr><td>' + prev.A + '</td><td>' + prev.B + '</td><td>' + prev.C + '</td><td>' + prev.D + '</td><td><strong>' + fmt(prev.notaHoja) + '</strong></td></tr></table></div>';
+    return;
+  }
+  ev.scores = {};
+  card.innerHTML = '<div class="border-2 border-teal-600 rounded-xl p-4">' + titulo +
+    '<div id="ev-rubric"></div>' +
+    '<div class="flex flex-wrap items-center gap-4 mt-2">' +
+      '<div class="text-lg">Nota de la hoja: <strong id="ev-total">—</strong> <span class="text-sm text-slate-500">sobre 10</span></div>' +
+      '<button class="btn btn-primary" id="btn-guardar-eval" onclick="prepararRegistro()">Registrar evaluación</button>' +
+    '</div><div id="ev-confirm" class="hidden mt-3"></div></div>';
+  renderRubric(document.getElementById('ev-rubric'), 'ev', ev.scores, () => { updateTotal('ev', ev.scores); document.getElementById('ev-confirm').classList.add('hidden'); });
   updateTotal('ev', ev.scores);
 }
 
-function guardarEval() {
-  if (!db) { showToast('No hay conexión con la base de datos.', 'err'); return; }
-  if (!ev.teamId || !ev.evaluado) { showToast('Elija su nombre y el equipo evaluado.', 'warn'); return; }
-  if (!isOpen(ev.paralelo)) { evApplyLock(); showToast('El tiempo para registrar evaluaciones ha finalizado.', 'err'); return; }
+function validarRegistro() {
+  if (!db) { showToast('No hay conexión con la base de datos.', 'err'); return false; }
+  if (!ev.teamId || !ev.evaluado) { showToast('Elija su nombre y el equipo evaluado.', 'warn'); return false; }
+  if (!isOpen(ev.paralelo)) { evApplyLock(); showToast('El tiempo para registrar evaluaciones ha finalizado.', 'err'); return false; }
   const tEv = findTeam(ev.evaluado);
   if (!tEv || tEv.paralelo !== ev.paralelo || (ev.tipo === 'coev' && ev.evaluado === ev.teamId) || (ev.tipo === 'auto' && ev.evaluado !== ev.teamId)) {
-    showToast('Combinación de equipos no válida.', 'err'); return;
+    showToast('Combinación de equipos no válida.', 'err'); return false;
   }
+  return true;
+}
+function prepararRegistro() {
+  if (!validarRegistro()) return;
   const miss = faltantes('ev', ev.scores);
   if (miss.length) { showToast('Falta calificar: ' + miss.map(c => c.id + '. ' + c.nombre).join(', ') + '.', 'err'); return; }
+  const box = document.getElementById('ev-confirm');
+  box.className = 'mt-3 p-3 rounded-lg bg-amber-50 border-2 border-amber-500 text-sm';
+  box.innerHTML = '<p class="font-semibold mb-1">Revise antes de confirmar: A ' + ev.scores.A + ', B ' + ev.scores.B + ', C ' + ev.scores.C + ', D ' + ev.scores.D + '. Nota de la hoja: ' + fmt(notaHoja(ev.scores)) + '.</p>' +
+    '<p class="mb-2">Una vez confirmado, el registro es <strong>definitivo</strong> para todo su equipo y no podrá modificarse.</p>' +
+    '<div class="flex gap-2"><button class="btn btn-danger" id="btn-confirmar-eval" onclick="guardarEval()">Confirmar registro definitivo</button>' +
+    '<button class="btn btn-sec" onclick="document.getElementById(\'ev-confirm\').classList.add(\'hidden\')">Volver a revisar</button></div>';
+}
+function guardarEval() {
+  if (!validarRegistro()) return;
+  const miss = faltantes('ev', ev.scores);
+  if (miss.length) { showToast('Falta calificar algún criterio.', 'err'); return; }
   const key = evKey();
   const rec = { paralelo:ev.paralelo, tipo:ev.tipo, equipoEvaluador:ev.teamId, equipoEvaluado:ev.evaluado,
     A:ev.scores.A, B:ev.scores.B, C:ev.scores.C, D:ev.scores.D, notaHoja:notaHoja(ev.scores),
     autor:ev.nombre, timestamp:firebase.database.ServerValue.TIMESTAMP };
-  const btn = document.getElementById('btn-guardar-eval'); btn.disabled = true;
-  db.ref(DB_NODE + '/' + key).set(rec).then(() => {
-    btn.disabled = false; btn.textContent = 'Guardada (puedes corregirla)';
-    showToast('Evaluación guardada. Nota de la hoja: ' + fmt(rec.notaHoja) + '.', 'ok');
-  }).catch(e => { btn.disabled = false; showToast('No se pudo guardar: ' + e.message, 'err'); });
+  const btn = document.getElementById('btn-confirmar-eval'); if (btn) btn.disabled = true;
+  db.ref(DB_NODE + '/' + key).transaction(cur => cur ? undefined : rec).then(tx => {
+    if (!tx.committed) showToast('Otro integrante de su equipo ya registró esta evaluación. No se admiten cambios.', 'warn');
+    else showToast('Evaluación registrada de forma definitiva. Nota de la hoja: ' + fmt(rec.notaHoja) + '.', 'ok');
+    setTimeout(() => { renderEvalCard(); evFillCoev(); }, 300);
+  }).catch(e => { if (btn) btn.disabled = false; showToast(/permission/i.test(e.message) ? 'El registro está cerrado o ya existe; no se admiten cambios.' : 'No se pudo guardar: ' + e.message, 'err'); });
 }
 
 /* ===================== PANEL DOCENTE ===================== */
@@ -644,7 +669,7 @@ function docLogin() {
     db.ref(CODES_NODE).on('value', s => { codigos = s.val() || {}; renderCodigos(); if (primera && loaded.teams) { primera = false; ensureCodigos(false); } });
     db.ref(VIEWS_NODE).on('value', s => { vistas = s.val() || {}; renderCodigos(); });
   }
-  ['doc-paralelo', 'cod-filtro', 'exp-filtro', 'log-par', 'pr-par', 'st-par'].forEach((id, i) => fillParaleloSelect(document.getElementById(id), 'Elija el paralelo', i > 0));
+  ['doc-paralelo', 'cod-filtro', 'exp-filtro', 'log-par', 'pr-par', 'st-par', 'ge-par'].forEach((id, i) => fillParaleloSelect(document.getElementById(id), 'Elija el paralelo', i > 0));
   recargarEditorEquipos();
   fillPesosInputs(); renderLocks(); renderDocPanel();
 }
@@ -657,7 +682,7 @@ function docLogout() {
 }
 function renderDocPanel() {
   if (!docenteActivo) return;
-  renderSeguimiento(); renderStats(); renderNotas(); renderLogs(); renderCodigos(); renderAcad(); logFiltroEquipos(); prFiltroEquipos();
+  renderSeguimiento(); renderStats(); renderNotas(); renderLogs(); renderCodigos(); renderAcad(); logFiltroEquipos(); prFiltroEquipos(); renderGestion();
 }
 
 /* --- 1. Interruptores por paralelo --- */
@@ -855,7 +880,9 @@ function borrarLog(id) {
   db.ref(DB_NODE + '/' + id).remove().then(() => showToast('Registro borrado.', 'ok')).catch(e => showToast('Error: ' + e.message, 'err'));
 }
 function clearCloudData() {
-  db.ref(DB_NODE).remove().then(() => showToast('Se borraron las autoevaluaciones y coevaluaciones de esta actividad.', 'ok'))
+  const upd = {}; allLogs.forEach(l => { upd[l.logId] = null; });
+  if (!Object.keys(upd).length) { showToast('No hay registros que borrar.', 'info'); return; }
+  db.ref(DB_NODE).update(upd).then(() => showToast('Se borraron las autoevaluaciones y coevaluaciones de esta actividad.', 'ok'))
     .catch(e => showToast('Error: ' + e.message, 'err'));
 }
 
@@ -990,6 +1017,43 @@ function descargarRespaldo() {
     const data = { actividad: ACT, fecha: new Date().toISOString(), nodos: Object.fromEntries(arr) };
     descargar('Respaldo_U3_Nordicos_ALC_' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(data, null, 2), 'application/json');
   }).catch(e => showToast('Error: ' + e.message, 'err'));
+}
+
+/* --- Gestión de evaluaciones por grupo --- */
+function geFiltroEquipos() { fillTeamFilter('ge-eq', 'ge-par', 'Elija el equipo'); renderGestion(); }
+function filaGe(l, etiqueta) {
+  return '<tr><td>' + etiqueta + '</td><td>' + (l ? l.A + ' · ' + l.B + ' · ' + l.C + ' · ' + l.D : '—') + '</td><td>' + (l ? '<strong>' + fmt(l.notaHoja) + '</strong>' : 'No registrada') + '</td><td>' +
+    (l ? esc(l.autor || '') + '<br><span class="text-xs text-slate-500">' + esc(fechaTxt(l.timestamp)) + '</span>' : '') + '</td><td>' +
+    (l ? '<button class="btn btn-danger btn-sm" onclick="armButton(this,()=>borrarLog(\'' + l.logId + '\'))">Eliminar</button>' : '') + '</td></tr>';
+}
+function renderGestion() {
+  const el = document.getElementById('ge-detalle'); if (!el || !docenteActivo) return;
+  const sel = document.getElementById('ge-eq'); if (sel && sel.options.length <= 1) fillTeamFilter('ge-eq', 'ge-par', 'Elija el equipo');
+  const t = findTeam(sel ? sel.value : ''); if (!t) { el.innerHTML = '<p class="text-sm text-slate-500">Elija un paralelo y un equipo.</p>'; return; }
+  const otros = teams[t.paralelo].filter(x => x.id !== t.id);
+  const auto = allLogs.find(l => l.logId === t.paralelo + '__auto__' + t.id + '__' + t.id);
+  const doc = docenteScores[t.id];
+  const head = '<tr><th>Registro</th><th>A · B · C · D</th><th>Nota</th><th>Autor / fecha</th><th></th></tr>';
+  el.innerHTML =
+    '<div><h4 class="font-semibold">Autoevaluación de ' + esc(groupLabel(t.id)) + '</h4><table class="data">' + head + filaGe(auto, 'Autoevaluación') + '</table></div>' +
+    '<div><h4 class="font-semibold mt-3">Coevaluaciones emitidas por ' + esc(groupLabel(t.id)) + '</h4><table class="data">' + head +
+      smap(otros, o => filaGe(allLogs.find(l => l.logId === t.paralelo + '__coev__' + t.id + '__' + o.id), 'Hacia Equipo ' + o.num)) + '</table></div>' +
+    '<div><h4 class="font-semibold mt-3">Coevaluaciones recibidas por ' + esc(groupLabel(t.id)) + '</h4><table class="data">' + head +
+      smap(otros, o => filaGe(allLogs.find(l => l.logId === t.paralelo + '__coev__' + o.id + '__' + t.id), 'Desde Equipo ' + o.num)) + '</table></div>' +
+    '<div><h4 class="font-semibold mt-3">Heteroevaluación del docente</h4><table class="data"><tr><th>A · B · C · D</th><th>Nota</th><th>Fecha</th><th></th></tr><tr><td>' +
+      (doc ? doc.A + ' · ' + doc.B + ' · ' + doc.C + ' · ' + doc.D : '—') + '</td><td>' + (doc ? '<strong>' + fmt(doc.notaHoja) + '</strong>' : 'Sin calificar') + '</td><td>' + (doc ? esc(fechaTxt(doc.timestamp)) : '') + '</td><td class="whitespace-nowrap">' +
+      '<button class="btn btn-primary btn-sm" onclick="geEditarDocente(\'' + t.id + '\')">' + (doc ? 'Modificar' : 'Calificar') + '</button> ' +
+      (doc ? '<button class="btn btn-danger btn-sm" onclick="armButton(this,()=>geBorrarDocente(\'' + t.id + '\'))">Eliminar</button>' : '') + '</td></tr></table></div>';
+}
+function geEditarDocente(id) {
+  const t = findTeam(id); if (!t) return;
+  const sp = document.getElementById('doc-paralelo'); sp.value = t.paralelo; docOnParalelo();
+  document.getElementById('doc-equipo').value = id; renderDocCard();
+  document.getElementById('doc-card').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+function geBorrarDocente(id) {
+  db.ref(DOCENTE_NODE + '/' + id).remove().then(() => { showToast('Heteroevaluación eliminada.', 'ok'); if (docSt.teamId === id) renderDocCard(); })
+    .catch(e => showToast('Error: ' + e.message, 'err'));
 }
 
 /* ===================== NOTAS, RESUMEN Y EXPORTACIONES ===================== */
